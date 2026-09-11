@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>뒤섞어도 남는 것</title>
+<style>
+  :root{ --bg:#0b0c10; --panel:#14161d; --panel2:#1b1e27; --ink:#eef1f6; --dim:#848b99;
+         --line:rgba(255,255,255,.11); --acc:#6fb2f0; --ok:#57c98a; --warn:#e0a52a; --bad:#e8734a;
+         --cho:#6fb2f0; --jung:#e0a52a; --jong:#57c98a; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 70px}
+  h1{font-size:23px;margin:0 0 7px;letter-spacing:-.01em}
+  .lede{color:var(--dim);font-size:13.5px;line-height:1.8;margin:0 0 16px;max-width:78ch}
+  .lede b{color:var(--ink)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:13px}
+  .card h2{font-size:14.5px;margin:0 0 3px;font-weight:600}
+  .card p.cap{font-size:12.5px;color:var(--dim);margin:0 0 12px;line-height:1.7}
+  .card p{font-size:13.5px;line-height:1.9;color:#c3c7d1;margin:0 0 10px}
+  .card p b{color:var(--ink)}
+  button,input,select{font:inherit}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:7px 12px;color:var(--dim);font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .btn:hover{color:var(--ink);border-color:var(--acc)}
+  .btn.on{border-color:var(--acc);color:var(--ink);font-weight:700;background:rgba(111,178,240,.13)}
+  .btn.go{font-weight:700;color:var(--ink);background:rgba(111,178,240,.15);border-color:var(--acc)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .row .lab{font-size:12px;color:var(--dim)}
+  .text{background:#07080c;border:1px solid var(--line);border-radius:11px;padding:16px 18px;
+    font-size:19px;line-height:2.05;letter-spacing:.01em;word-break:keep-all;min-height:120px}
+  .text .s{transition:color .12s}
+  .text .u{color:#5d6472}
+  .text .p{color:#eef1f6}
+  .text .h{color:var(--ok)}
+  .meter{display:flex;align-items:center;gap:10px;margin-top:11px;font-size:12px;color:var(--dim)}
+  .meter .track{flex:1;height:9px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;display:block}
+  .meter .fill{display:block;height:100%;background:var(--bad);transition:width .2s,background .2s}
+  .meter .n{width:52px;text-align:right;font-variant-numeric:tabular-nums;color:#c3c7d1;font-weight:700}
+  .keys{margin-top:13px}
+  .kgrp{margin-bottom:12px}
+  .kh{font-size:11.5px;color:var(--dim);margin-bottom:6px;display:flex;gap:8px;align-items:center}
+  .kh b{font-size:12.5px}
+  .kh .c1{color:var(--cho)} .kh .c2{color:var(--jung)} .kh .c3{color:var(--jong)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:5px 7px;
+    cursor:pointer;text-align:center;min-width:44px;line-height:1.25}
+  .chip:hover{border-color:var(--acc)}
+  .chip.sel{border-color:var(--acc);background:rgba(111,178,240,.16)}
+  .chip.done{border-color:rgba(87,201,138,.45)}
+  .chip .a{font-size:16px;font-weight:700;color:var(--ink);display:block}
+  .chip .b{font-size:10px;color:var(--dim);display:block}
+  .chip .c{font-size:14px;font-weight:700;display:block;margin-top:1px}
+  .chip.done .c{color:var(--ok)} .chip .c.none{color:#3d434f}
+  .pal{background:var(--panel2);border:1px solid var(--acc);border-radius:11px;padding:10px 12px;margin-top:9px}
+  .pal .t{font-size:11.5px;color:var(--dim);margin-bottom:7px}
+  .pal .chips .chip{min-width:40px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;color:var(--dim);font-weight:500;padding:6px 5px;border-bottom:1px solid var(--line);font-size:11.5px}
+  th:first-child{text-align:left}
+  td{padding:7px 5px;border-bottom:1px solid rgba(255,255,255,.05);color:#c3c7d1;text-align:right}
+  td:first-child{text-align:left;color:var(--ink);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  .bar{display:inline-block;height:9px;border-radius:3px;background:var(--acc);vertical-align:-1px}
+  .flag{border-radius:10px;padding:11px 13px;margin-top:11px;font-size:13px;line-height:1.8;
+    background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--dim);color:#c3c7d1}
+  .flag.ok{border-left-color:var(--ok)} .flag.warn{border-left-color:var(--warn)}
+  .flag b{color:var(--ink)}
+  .hint{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .hint b{color:var(--ink)}
+  .stat{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:10px}
+  .stat span b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .ftab{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .ftab table{min-width:430px}
+  @media (max-width:720px){
+    .text{font-size:16.5px;line-height:1.95;padding:13px 14px}
+    .chip{min-width:40px}
+    th,td{padding:6px 4px;font-size:11.5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>뒤섞어도 남는 것</h1>
+  <p class="lede">아래 글은 한글 <b>자모를 통째로 뒤섞은</b> 암호입니다. ㄱ이 ㅍ이 되고 ㅏ가 ㅗ가 되는 식으로요.
+  열쇠는 <b>19! × 21! × 27!</b> 가지 — 우주의 원자 수보다 많습니다.<br>
+  그런데 이건 몇 분이면 풀립니다. <b>글자를 뒤섞어도 지워지지 않는 것</b>이 있기 때문입니다.</p>
+
+  <div class="card">
+    <h2>1 · 직접 풀어 보기</h2>
+    <p class="cap">아래 칩은 <b>암호문에 나온 자모</b>를 많이 쓰인 순서로 늘어놓은 것입니다.
+    칩을 누르고, 그게 원래 무슨 자모일지 골라 주세요. 고르는 즉시 위 글이 바뀝니다.</p>
+    <div class="row" style="margin-top:0">
+      <span class="lab">난이도</span>
+      <button class="btn on" data-lv="1">초성만 섞음</button>
+      <button class="btn" data-lv="2">초성 + 중성</button>
+      <button class="btn" data-lv="3">전부 섞음</button>
+      <button class="btn" id="newq" style="margin-left:6px">새 문제</button>
+    </div>
+    <div class="text" id="out" style="margin-top:12px"></div>
+    <div class="meter">
+      <span>말이 되는 정도</span>
+      <span class="track"><span class="fill" id="mfill" style="width:0%"></span></span>
+      <span class="n" id="mnum">0%</span>
+    </div>
+    <div class="keys" id="keys"></div>
+    <div id="palwrap"></div>
+    <div class="row">
+      <button class="btn" id="hint">힌트 하나</button>
+      <button class="btn" id="reset">지우고 다시</button>
+      <button class="btn" id="reveal">정답 보기</button>
+    </div>
+    <div class="flag" id="flag"></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · 기계에게 맡기면</h2>
+    <p class="cap">열쇠를 무작위로 하나 잡고, 자모 두 개를 바꿔 보고, <b>말이 되는 쪽으로만</b> 조금씩 기어갑니다.
+    가끔은 일부러 나빠지는 쪽으로도 갑니다(안 그러면 어설픈 답에 갇혀요). 눌러서 지켜보세요.</p>
+    <div class="text" id="aout" style="font-size:17px;min-height:100px"></div>
+    <div class="row">
+      <button class="btn go" id="run">기계에게 맡기기</button>
+      <button class="btn" id="stop" disabled>멈추기</button>
+      <span class="lab" id="astat"></span>
+    </div>
+    <div class="flag" id="aflag">아직 안 돌렸습니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>3 · 왜 풀리는가</h2>
+    <p>자모를 뒤섞어도 <b>빈도의 모양</b>은 그대로 따라갑니다. 한국어에서 첫소리 ㅇ이 가장 흔한데,
+    ㅇ을 ㅋ으로 바꿔 놓으면 이번엔 <b>ㅋ이 가장 흔해집니다.</b> 이름만 바뀌고 순위표는 그대로예요.
+    그래서 암호문에서 제일 흔한 첫소리를 찾아 ㅇ에 대 보면, 상당한 확률로 맞습니다.</p>
+    <p class="cap">제가 쓴 한국어 글 <b id="corp">18,094</b>음절에서 직접 센 값입니다.</p>
+    <div id="freq"></div>
+    <p style="margin-top:12px">받침이 특히 강력합니다. <b>절반 넘는 글자가 받침이 없어요.</b>
+    이건 암호로도 못 가립니다 — 받침 없는 자리는 뒤섞어도 여전히 받침이 없거든요.
+    그래서 암호문만 봐도 <b>글자 구조가 훤히 드러납니다.</b> 위 문제에서 받침 자리를 아예 안 섞은 이유도 그겁니다.</p>
+    <p>이게 <b>빈도 분석</b>입니다. 9세기 바그다드의 알킨디가 아랍어로 처음 썼다고 전해지고,
+    그 뒤 천 년 동안 단순 치환 암호를 전부 무력화시켰습니다. 열쇠 가짓수가 아무리 많아도 소용없어요 —
+    <b>가짓수가 많은 것과 찾기 어려운 것은 다른 문제</b>니까요. 이 판의 열쇠 공간도
+    10의 50승이 넘지만, 통계는 그 안에서 곧장 정답 쪽으로 걸어 내려갑니다.</p>
+    <div class="hint" id="method"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split('');
+var JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ'.split('');
+var JONG=['(없음)'].concat('ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ'.split(''));
+var NC=19,NJ=21,NT=28;
+var SETS=[CHO,JUNG,JONG], NS=[NC,NJ,NT];
+
+/* ---------- 말뭉치 표 ---------- */
+var RAW="18094|11593|0,381;1,42;4,106;8,25;16,4;17,20;18,17;20,12;21,2;22,2;25,76;26,12;28,77;32,2;49,8;112,67;116,38;120,28;128,46;129,8;131,60;140,119;148,2;160,5;168,11;169,11;172,1;176,31;185,4;188,8;189,18;196,72;224,177;225,7;231,4;232,3;243,12;245,52;252,55;256,18;273,7;308,2;336,22;364,51;365,10;368,1;372,14;373,3;396,5;420,2;448,24;476,30;480,5;504,218;508,21;512,31;520,43;521,12;523,1;560,260;564,6;568,17;577,6;586,6;588,46;596,2;700,2;702,2;720,2;728,8;813,2;868,2;952,2;956,1;980,7;1036,3;1053,6;1092,11;1100,8;1108,6;1117,11;1148,3;1165,4;1176,146;1177,2;1180,21;1184,13;1192,27;1193,6;1198,13;1204,39;1208,5;1212,4;1221,3;1224,2;1253,4;1288,9;1292,4;1299,2;1304,8;1315,20;1316,10;1324,1;1335,3;1345,1;1348,18;1400,14;1401,2;1404,2;1408,10;1426,27;1427,13;1448,4;1484,4;1540,43;1544,3;1548,8;1568,5;1641,2;1652,9;1680,24;1684,432;1688,22;1701,17;1736,597;1737,8;1740,4;1753,12;1764,701;1765,6;1768,34;1771,1;1772,10;1780,1;1781,25;1785,31;1791,5;1792,115;1876,38;1880,16;1887,1;1892,1;1895,6;1897,5;1902,1;1904,83;1988,198;1989,3;1992,4;1996,25;2009,44;2044,1;2072,44;2076,11;2080,7;2089,27;2128,52;2136,12;2145,6;2212,28;2231,2;2248,1;2268,85;2269,8;2272,25;2275,6;2276,98;2284,2;2285,5;2289,36;2324,15;2352,6;2353,2;2373,3;2380,24;2468,4;2472,9;2491,11;2576,4;2577,12;2716,2;2800,4;2816,2;2817,2;2856,7;2863,4;2873,4;2875,4;2884,2;2940,142;2941,1;2944,5;2956,38;2961,2;2968,58;2969,2;2972,8;2984,4;2985,2;2997,8;3017,10;3052,49;3056,27;3068,10;3069,3;3071,2;3072,2;3079,12;3080,8;3084,8;3108,45;3109,39;3116,1;3124,2;3127,2;3128,9;3129,2;3136,2;3164,349;3165,20;3168,8;3276,4;3304,5;3312,2;3332,5;3416,9;3424,30;3432,4;3444,40;3448,33;3452,199;3460,7;3461,2;3463,3;3500,222;3501,18;3504,13;3508,4;3516,30;3517,32;3519,2;3521,2;3528,37;3529,11;3532,117;3534,11;3536,7;3549,3;3550,17;3553,2;3556,5;3557,12;3560,4;3572,2;3575,1;3640,12;3641,8;3644,18;3648,1;3656,2;3659,4;3668,7;3696,18;3700,205;3704,2;3717,20;3719,4;3752,60;3753,16;3755,6;3756,1;3760,3;3771,9;3892,81;3894,4;3896,29;3900,8;3913,5;4004,6;4012,2;4032,2;4088,22;4092,3;4095,1;4096,10;4113,1;4116,37;4117,4;4118,7;4120,29;4123,12;4124,12;4125,13;4132,6;4137,32;4144,26;4145,4;4228,17;4232,39;4236,7;4244,3;4245,1;4256,3;4260,2;4264,2;4285,10;4288,8;4292,21;4340,132;4341,7;4344,14;4348,9;4357,2;4361,2;4368,3;4388,1;4480,86;4481,2;4484,83;4488,30;4499,3;4505,22;4620,31;4628,4;4676,38;4699,3;4704,8;4712,6;4732,4;4820,2;4945,3;5068,9;5072,8;5292,105;5296,29;5300,20;5308,2;5313,83;5320,7;5321,53;5336,2;5341,35;5376,4;5404,215;5405,14;5406,2;5408,37;5412,15;5420,1;5421,2;5423,12;5425,56;5432,88;5440,1;5448,12;5449,1;5451,2;5464,2;5488,2;5516,79;5517,39;5520,14;5524,11;5537,8;5656,140;5660,76;5664,5;5672,2;5675,3;5740,4;5756,2;5757,2;5768,6;5796,65;5800,2;5804,21;5813,125;5815,1;5817,20;5852,136;5853,22;5856,64;5860,69;5868,11;5878,2;5880,1;5897,1;5907,5;5992,2;6012,3;6105,2;6112,4;6384,8;6388,1;6401,6;6441,6;6444,5;6468,183;6469,2;6472,42;6474,34;6476,10;6485,4;6488,3;6494,4;6496,3;6497,4;6513,2;6524,14;6525,1;6545,23;6580,213;6581,2;6584,3;6587,1;6588,10;6596,2;6597,2;6598,57;6599,10;6600,24;6608,230;6612,3;6636,58;6637,7;6638,2;6640,29;6644,6;6656,3;6657,6;6662,1;6664,21;6692,73;6693,6;6696,5;6700,36;6702,3;6707,1;6709,18;6720,33;6724,21;6740,10;6748,11;6776,13;6780,14;6804,92;6825,16;6832,57;6836,15;6840,4;6848,8;6851,3;6853,8;6860,17;6864,47;6868,2;6896,2;6916,96;6920,2;6933,2;6944,40;6952,6;6972,132;6976,221;6980,178;6988,98;6993,2;7000,145;7028,676;7029,1;7032,111;7036,58;7037,8;7043,4;7044,8;7045,183;7047,2;7048,78;7049,2;7056,143;7057,48;7060,2;7064,9;7072,2;7073,12;7077,38;7084,57;7088,1;7168,37;7169,36;7172,93;7176,16;7184,40;7185,14;7189,114;7196,80;7224,11;7244,5;7280,22;7281,3;7284,8;7297,2;7301,8;7307,2;7308,1;7392,5;7420,45;7421,4;7424,12;7428,16;7437,6;7441,36;7448,2;7560,2;7561,1;7564,8;7576,2;7581,19;7616,335;7617,40;7620,89;7624,12;7632,4;7633,22;7635,2;7642,2;7644,19;7672,10;7757,1;7777,1;7868,4;7869,70;8009,1;8164,2;8205,4;8226,1;8232,26;8233,9;8236,2;8240,1;8248,3;8253,2;8254,11;8260,8;8344,18;8348,6;8372,21;8400,9;8456,31;8477,6;8540,26;8596,19;8597,6;8600,4;8604,10;8613,2;8617,7;8624,2;8736,8;8737,14;8757,2;8792,54;8793,9;8796,5;8800,15;8808,3;8809,2;8820,7;8824,15;8932,15;8948,6;8952,6;8988,10;8992,2;9008,2;9044,16;9048,16;9065,3;9184,4;9212,4;9268,1;9324,18;9328,5;9332,26;9340,7;9380,14;9397,2;9401,1;9408,21;9416,3;9436,11;9437,2;9453,6;9455,6;9520,44;9521,1;9524,3;9548,2;9552,4;9632,2;9633,2;9636,4;9649,1;9653,7;9716,1;9772,3;9793,2;9884,6;9912,40;9913,6;9916,2;9920,5;9968,8;9969,2;9976,2;9987,6;9996,32;9998,2;10000,45;10013,2;10024,9;10108,6;10136,31;10137,8;10168,4;10172,4;10185,35;10220,34;10221,3;10224,6;10332,52;10361,1;10368,5;10376,8;10472,6;10508,4;10556,4;10557,3;10564,3;10584,168;10585,9;10588,141;10592,18;10600,14;10601,78;10605,10;10612,71;10632,10;10633,8;10661,12;10696,2;10700,2;10712,11;10715,2;10724,2;10752,4;10756,2;10769,12;10773,6;10808,17;10812,2;10836,16;10837,63;10840,16;10844,6;10857,5;10892,16;10893,2;10911,8;10948,17;10961,4;10984,5;11032,1;11060,2;11088,6;11092,7;11113,11;11116,2;11144,42;11148,8;11160,2;11161,7|912,63,620,882,27,1131,356,153,0,483,3,859,487,6,99,45,100,70,109;37,0,13,38,0,23,10,4,2,48,0,271,39,0,0,0,14,6,94;0,0,0,0,0,0,0,0,0,0,0,17,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;99,3,10,202,0,34,12,47,0,111,4,339,150,53,19,9,15,31,129;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;9,0,6,0,0,0,0,0,0,11,0,17,2,0,0,0,0,0,0;7,0,1,0,0,0,0,0,0,0,0,14,0,0,2,0,0,0,1;70,9,0,14,0,243,14,13,0,49,5,238,59,9,18,0,8,21,35;16,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,4;3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0;25,8,25,21,0,6,5,9,0,73,0,152,13,1,3,0,5,10,6;10,0,544,6,0,24,1,0,0,5,0,45,10,0,19,0,0,0,15;3,0,12,4,0,0,0,0,0,21,0,28,0,0,0,0,0,0,0;6,2,3,13,0,0,4,0,2,16,0,56,7,4,0,0,0,6,5;13,0,45,34,0,0,0,0,0,61,0,34,2,0,0,0,0,0,0;122,0,0,81,0,25,7,35,0,74,0,135,57,6,6,8,2,12,107;3,0,4,0,0,0,0,4,0,4,0,15,0,0,8,0,0,0,6;0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0;0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0;4,4,2,0,0,0,0,1,9,6,0,95,2,0,0,0,0,0,0;6,0,4,0,0,0,2,0,0,4,0,39,0,0,0,0,0,0,0;27,0,2,4,0,0,0,0,0,7,0,25,3,0,0,0,0,0,0";
+var P=RAW.split('|'), CN=+P[0], CNB=+P[1];
+var LS=new Float32Array(11172); var floorS=Math.log(0.5/(CN+0.5*11172));
+for(var i=0;i<11172;i++) LS[i]=floorS;
+P[2].split(';').forEach(function(e){ var t=e.split(','); LS[+t[0]]=Math.log((+t[1]+0.5)/(CN+0.5*11172)); });
+var LB=[]; var rows=P[3].split(';');
+for(var t=0;t<NT;t++){ var r=rows[t].split(','), a=new Float32Array(NC);
+  for(var c=0;c<NC;c++) a[c]=Math.log((+r[c]+0.5)/(CNB+0.5*NT*NC)); LB.push(a); }
+// 자모/초중 결합 표는 음절표에서 되뽑는다
+var FC=new Float64Array(NC),FJ=new Float64Array(NJ),FT=new Float64Array(NT),FCJ=[];
+for(i=0;i<NC;i++) FCJ.push(new Float64Array(NJ));
+P[2].split(';').forEach(function(e){ var t=e.split(','), k=+t[0], v=+t[1];
+  var a=(k/588)|0, b=((k%588)/28)|0, c=k%28;
+  FC[a]+=v; FJ[b]+=v; FT[c]+=v; FCJ[a][b]+=v; });
+var LCJ=FCJ.map(function(r){ return Float64Array.from(r,function(v){ return Math.log((v+0.5)/(CN+0.5)); }); });
+var W={syl:1, cj:0.8, bi:0.6};        // 낯선 문장으로 시험해 고른 조합
+
+function dec(ch){ var i=ch.charCodeAt(0)-0xAC00; return [(i/588)|0, ((i%588)/28)|0, i%28]; }
+function comp(a,b,c){ return String.fromCharCode(0xAC00+a*588+b*28+c); }
+function isKo(ch){ return ch>='가' && ch<='힣'; }
+
+function score(tk,k0,k1,k2){
+  var s=0, prev=-1;
+  for(var i=0;i<tk.length;i+=3){
+    var a=tk[i];
+    if(a<0){ prev=-1; continue; }
+    var A=k0[a], B=k1[tk[i+1]], C=k2[tk[i+2]];
+    s += W.syl*LS[A*588+B*28+C] + W.cj*LCJ[A][B];
+    if(prev>=0) s += W.bi*LB[prev][A];
+    prev=C;
+  }
+  return s;
+}
+function tokenize(s){ var t=[]; for(var i=0;i<s.length;i++){ var ch=s[i];
+  if(isKo(ch)){ var d=dec(ch); t.push(d[0],d[1],d[2]); } else t.push(-1,-1,-1); } return t; }
+function shuffle(n,fixFirst){ var a=[],i; for(i=0;i<n;i++)a.push(i);
+  var s=fixFirst?1:0;
+  for(i=n-1;i>s;i--){ var j=s+((Math.random()*(i-s+1))|0); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+function ident(n){ var a=[],i; for(i=0;i<n;i++)a.push(i); return a; }
+
+/* ---------- 문제 ---------- */
+var PASSAGES=[
+ '암호를 푸는 일은 생각보다 통계에 가깝습니다 어떤 글자가 자주 나오는지만 세어도 절반은 풀립니다 한국어는 첫소리에 이응이 가장 많이 오고 가운뎃소리는 아와 이가 압도적입니다 받침은 아예 없는 경우가 절반을 넘습니다 이 규칙성 덕분에 사람도 기계도 열쇠를 찾아낼 수 있습니다 글자를 뒤섞어도 그 뒤섞임 자체가 흔적을 남기기 때문입니다 순서를 바꾸는 것만으로는 무엇도 감추지 못합니다 이것이 바로 빈도 분석이라고 부르는 방법입니다',
+ '오늘 저녁에는 국을 끓이려고 합니다 멸치와 다시마를 넣고 우린 물에 무를 얇게 썰어 넣습니다 소금은 나중에 넣어야 무가 부드럽게 익습니다 대파는 마지막에 올려야 향이 살아납니다 밥은 미리 지어 두고 김치는 냉장고에서 꺼내 둡니다 간단하지만 정성이 들어간 상차림입니다 국물이 끓는 소리를 들으면 하루가 다 지나간 것 같습니다 이런 저녁이 오래 기억에 남습니다',
+ '멀리 있는 별에서 오는 빛은 아주 오래된 소식입니다 우리가 지금 보는 반짝임은 그 별의 지난 모습이고 어떤 별은 이미 사라졌을지도 모릅니다 하늘을 올려다보는 일은 그래서 과거를 보는 일과 같습니다 밤이 맑은 날에는 은하수의 흐릿한 띠도 눈으로 볼 수 있습니다 그 띠는 우리가 속한 은하를 안쪽에서 바라본 모습입니다 우리는 늘 그 안에 있으면서도 그것을 밖에서 볼 수는 없습니다',
+ '책을 읽다가 문득 창밖을 보았습니다 비가 그치고 담벼락을 따라 물기가 마르는 중이었습니다 골목 끝에서 아이들이 뛰어가는 소리가 들렸고 어디선가 밥 짓는 냄새가 났습니다 특별한 일은 없었지만 그 순간이 오래 기억에 남았습니다 무엇도 일어나지 않은 시간이 가장 또렷하게 남는다는 것이 이상합니다 아마 그런 시간에만 마음이 온전히 열려 있기 때문일 것입니다'
+];
+var plain='', cipher='', key=[null,null,null], lvl=1, guess=[null,null,null];
+var baseScore=0, trueScore=0, usedHint={};
+
+function makePuzzle(){
+  plain = PASSAGES[(Math.random()*PASSAGES.length)|0];
+  // 받침(종성)은 섞지 않는다 — 섞어도 '없음'이 그대로 드러나 재미가 없고, 난이도만 올라간다
+  key[0] = (lvl>=1)? shuffle(NC) : ident(NC);
+  key[1] = (lvl>=2)? shuffle(NJ) : ident(NJ);
+  key[2] = (lvl>=3)? shuffle(NT,true) : ident(NT);
+  var out='';
+  for(var i=0;i<plain.length;i++){ var ch=plain[i];
+    if(isKo(ch)){ var d=dec(ch); out+=comp(key[0][d[0]],key[1][d[1]],key[2][d[2]]); } else out+=ch; }
+  cipher=out;
+  guess=[new Array(NC).fill(null), new Array(NJ).fill(null), new Array(NT).fill(null)];
+  usedHint={};
+  var tk=tokenize(cipher);
+  // 정답 열쇠 = 암호 자모 → 원래 자모 (key 의 역)
+  var inv=[[],[],[]];
+  for(var g=0;g<3;g++){ inv[g]=new Array(NS[g]);
+    for(i=0;i<NS[g];i++) inv[g][key[g][i]]=i; }
+  ANS=inv;
+  trueScore=score(tk,inv[0],inv[1],inv[2]);
+  var b=0;
+  for(i=0;i<12;i++) b+=score(tk, lvl>=1?shuffle(NC):ident(NC),
+                                 lvl>=2?shuffle(NJ):ident(NJ),
+                                 lvl>=3?shuffle(NT,true):ident(NT));
+  baseScore=b/12;
+}
+var ANS=null;
+
+function curKey(g){
+  // 미지정은 항등(암호 자모 그대로)으로 둔다 — 화면에는 흐리게 표시
+  var k=new Array(NS[g]);
+  for(var i=0;i<NS[g];i++) k[i] = (guess[g][i]==null)? i : guess[g][i];
+  return k;
+}
+function render(){
+  var k0=curKey(0),k1=curKey(1),k2=curKey(2), html='';
+  for(var i=0;i<cipher.length;i++){
+    var ch=cipher[i];
+    if(!isKo(ch)){ html+= (ch===' ')?' ':escape2(ch); continue; }
+    var d=dec(ch);
+    var known = (lvl<1||guess[0][d[0]]!=null) && (lvl<2||guess[1][d[1]]!=null) && (lvl<3||guess[2][d[2]]!=null);
+    var cls = known? (usedHint[d[0]]? 's h':'s p') : 's u';
+    html += '<span class="'+cls+'">'+comp(k0[d[0]],k1[d[1]],k2[d[2]])+'</span>';
+  }
+  $('out').innerHTML=html;
+  var s=score(tokenize(cipher),k0,k1,k2);
+  var pct=Math.max(0,Math.min(100,(s-baseScore)/(trueScore-baseScore)*100));
+  $('mfill').style.width=pct.toFixed(1)+'%';
+  $('mfill').style.background = pct>85?'var(--ok)':(pct>55?'var(--warn)':'var(--bad)');
+  $('mnum').textContent=pct.toFixed(0)+'%';
+  renderKeys();
+  var done=0, tot=0;
+  for(var g=0;g<lvl;g++) for(var j=0;j<NS[g];j++){ if(cipherUses(g,j)){ tot++; if(guess[g][j]!=null) done++; } }
+  var f=$('flag');
+  if(pct>=99.5){ f.className='flag ok';
+    f.innerHTML='<b>다 푸셨습니다.</b> 열쇠 후보가 10의 50승 개였는데, 실제로 확인해 본 건 몇십 개뿐이죠. '+
+      '빈도가 나머지를 다 지워 줬습니다.'; }
+  else if(pct>=80){ f.className='flag ok';
+    f.innerHTML='<b>거의 다 왔습니다.</b> 이제부터는 통계가 아니라 <b>눈으로 읽어서</b> 마무리하는 구간이에요. '+
+      '말이 될 뻔한 단어를 찾아 거꾸로 짚어 보세요. ('+done+'/'+tot+' 배정)'; }
+  else if(done===0){ f.className='flag';
+    f.innerHTML='가장 흔한 첫소리부터 시작하세요. 한국어 첫소리 1위는 <b>ㅇ</b>(19.8%), 2위 <b>ㄱ</b>(13.5%)입니다. '+
+      '암호문 1위 칩을 ㅇ에 대 보는 게 정석입니다.'; }
+  else { f.className='flag';
+    f.innerHTML='배정 '+done+'/'+tot+'. 한 글자짜리 낱말(<b>이 그 수 것</b>)과 자주 오는 끝맺음(<b>니다 습니다</b>)을 노려 보세요.'; }
+}
+function escape2(c){ return c.replace(/[&<>]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[m];}); }
+
+var freqCache=null;
+function cipherFreq(){
+  if(freqCache) return freqCache;
+  var f=[new Float64Array(NC),new Float64Array(NJ),new Float64Array(NT)], n=0;
+  for(var i=0;i<cipher.length;i++){ var ch=cipher[i]; if(!isKo(ch)) continue;
+    var d=dec(ch); f[0][d[0]]++; f[1][d[1]]++; f[2][d[2]]++; n++; }
+  freqCache={f:f,n:n}; return freqCache;
+}
+function cipherUses(g,j){ return cipherFreq().f[g][j]>0; }
+
+var sel=null;   // [급, 암호자모index]
+function renderKeys(){
+  var cf=cipherFreq(), html='';
+  var titles=[['첫소리','c1'],['가운뎃소리','c2'],['받침','c3']];
+  for(var g=0;g<lvl;g++){
+    var order=[];
+    for(var j=0;j<NS[g];j++) if(cf.f[g][j]>0) order.push(j);
+    order.sort(function(a,b){ return cf.f[g][b]-cf.f[g][a]; });
+    html+='<div class="kgrp"><div class="kh"><b class="'+titles[g][1]+'">'+titles[g][0]+'</b>'+
+      '<span>암호문에 나온 순서 · 위=암호 글자, 아래=내 답</span></div><div class="chips">';
+    order.forEach(function(j){
+      var mine=guess[g][j];
+      html+='<button class="chip'+(sel&&sel[0]===g&&sel[1]===j?' sel':'')+(mine!=null?' done':'')+
+        '" data-g="'+g+'" data-j="'+j+'">'+
+        '<span class="a">'+SETS[g][j]+'</span>'+
+        '<span class="b">'+(cf.f[g][j]/cf.n*100).toFixed(1)+'%</span>'+
+        '<span class="c'+(mine==null?' none':'')+'">'+(mine==null?'?':SETS[g][mine])+'</span></button>';
+    });
+    html+='</div></div>';
+  }
+  $('keys').innerHTML=html;
+  renderPal();
+}
+function renderPal(){
+  if(!sel){ $('palwrap').innerHTML=''; return; }
+  var g=sel[0], ref=[FC,FJ,FT][g], tot=0, i;
+  for(i=0;i<NS[g];i++) tot+=ref[i];
+  var order=[]; for(i=0;i<NS[g];i++) order.push(i);
+  order.sort(function(a,b){ return ref[b]-ref[a]; });
+  var html='<div class="pal"><div class="t">암호 글자 <b style="color:#eef1f6;font-size:15px">'+SETS[g][sel[1]]+
+    '</b> 는 원래 무엇이었을까요? (한국어에서 흔한 순서, 괄호는 실제 빈도)</div><div class="chips">';
+  order.forEach(function(p){
+    var taken=guess[g].indexOf(p);
+    html+='<button class="chip" data-p="'+p+'"'+(taken>=0?' style="opacity:.45"':'')+'>'+
+      '<span class="a">'+SETS[g][p]+'</span><span class="b">'+(ref[p]/tot*100).toFixed(1)+'%</span></button>';
+  });
+  html+='</div><div class="t" style="margin:8px 0 0">이미 쓴 자모를 다시 고르면 서로 자리를 바꿉니다.</div></div>';
+  $('palwrap').innerHTML=html;
+}
+$('keys').onclick=function(e){ var b=e.target.closest('button'); if(!b) return;
+  var g=+b.dataset.g, j=+b.dataset.j;
+  sel = (sel&&sel[0]===g&&sel[1]===j)? null : [g,j];
+  renderKeys(); };
+$('palwrap').onclick=function(e){ var b=e.target.closest('button'); if(!b||!sel) return;
+  var g=sel[0], j=sel[1], p=+b.dataset.p;
+  var prev=guess[g].indexOf(p);
+  if(prev>=0 && prev!==j) guess[g][prev]=guess[g][j];   // 자리 맞바꾸기
+  guess[g][j]=p; sel=null; render(); };
+
+/* ---------- 버튼 ---------- */
+[].forEach.call(document.querySelectorAll('[data-lv]'),function(b){
+  b.onclick=function(){
+    [].forEach.call(document.querySelectorAll('[data-lv]'),function(x){x.classList.remove('on');});
+    b.classList.add('on'); lvl=+b.dataset.lv; newPuzzle(); };
+});
+function newPuzzle(){ freqCache=null; sel=null; makePuzzle(); stopAuto(); $('aout').textContent=cipher;
+  $('aflag').className='flag'; $('aflag').textContent='위와 같은 암호문입니다. 아직 안 돌렸습니다.'; $('astat').textContent='';
+  render(); }
+$('newq').onclick=newPuzzle;
+$('reset').onclick=function(){ guess=[new Array(NC).fill(null),new Array(NJ).fill(null),new Array(NT).fill(null)];
+  usedHint={}; sel=null; render(); };
+$('hint').onclick=function(){
+  var cf=cipherFreq(), cand=[];
+  for(var g=0;g<lvl;g++) for(var j=0;j<NS[g];j++)
+    if(cf.f[g][j]>0 && guess[g][j]!==ANS[g][j]) cand.push([g,j,cf.f[g][j]]);
+  if(!cand.length) return;
+  cand.sort(function(a,b){ return b[2]-a[2]; });
+  var pick=cand[0], g=pick[0], j=pick[1], p=ANS[g][j];
+  var prev=guess[g].indexOf(p);
+  if(prev>=0) guess[g][prev]=guess[g][j];
+  guess[g][j]=p; usedHint[j]=1; sel=null; render();
+};
+$('reveal').onclick=function(){
+  for(var g=0;g<3;g++) for(var j=0;j<NS[g];j++) guess[g][j]=ANS[g][j];
+  sel=null; render();
+};
+
+/* ---------- 기계 풀이 ---------- */
+var raf=null, A=null;
+function stopAuto(){ if(raf) cancelAnimationFrame(raf); raf=null;
+  $('run').disabled=false; $('stop').disabled=true; }
+$('stop').onclick=stopAuto;
+$('run').onclick=function(){
+  var tk=tokenize(cipher);
+  A={ tk:tk, k:startKey(), it:0, IT:120000, T0:2, T1:0.02,
+      best:-1e18, bk:null, restart:0, R:8, t0:performance.now() };
+  A.cur=score(tk,A.k[0],A.k[1],A.k[2]);
+  $('run').disabled=true; $('stop').disabled=false;
+  $('aflag').className='flag'; $('aflag').textContent='기어가는 중입니다…';
+  step();
+};
+// 섞이지 않은 급은 건드릴 이유가 없다. 난이도가 화면에 적혀 있으니 기계도 안다.
+// 받침은 '없음'(0번)을 고정해 암호화했으므로, 그 자리는 풀 때도 건드리지 않는다.
+function startKey(){
+  return [ lvl>=1? shuffle(NC):ident(NC),
+           lvl>=2? shuffle(NJ):ident(NJ),
+           lvl>=3? shuffle(NT,true):ident(NT) ];
+}
+function pickClass(){
+  var pool=[]; if(lvl>=1)pool.push(0); if(lvl>=2)pool.push(1); if(lvl>=3)pool.push(2);
+  return pool[(Math.random()*pool.length)|0];
+}
+function step(){
+  var CH=2600, i;
+  for(i=0;i<CH && A.it<A.IT;i++,A.it++){
+    var T=A.T0*Math.pow(A.T1/A.T0, A.it/A.IT);
+    var g = pickClass(), k=A.k[g], n=NS[g];
+    var lo = (g===2)?1:0;                      // 받침 0번(없음)은 제자리 고정
+    var a=lo+((Math.random()*(n-lo))|0), b=lo+((Math.random()*(n-lo))|0);
+    if(a===b) continue;
+    var t=k[a]; k[a]=k[b]; k[b]=t;
+    var nw=score(A.tk,A.k[0],A.k[1],A.k[2]);
+    if(nw>A.cur || Math.random()<Math.exp((nw-A.cur)/Math.max(T,1e-9))) A.cur=nw;
+    else { t=k[a]; k[a]=k[b]; k[b]=t; }
+  }
+  showAuto();
+  if(A.it>=A.IT){
+    if(A.cur>A.best){ A.best=A.cur; A.bk=[A.k[0].slice(),A.k[1].slice(),A.k[2].slice()]; }
+    A.restart++;
+    if(A.restart<A.R){
+      A.k=startKey();
+      A.cur=score(A.tk,A.k[0],A.k[1],A.k[2]); A.it=0;
+      raf=requestAnimationFrame(step); return;
+    }
+    A.k=A.bk; showAuto(true); finishAuto(); return;
+  }
+  raf=requestAnimationFrame(step);
+}
+function showAuto(final){
+  var k=final?A.bk:A.k, out='';
+  for(var i=0;i<cipher.length;i++){ var ch=cipher[i];
+    if(!isKo(ch)){ out+=ch; continue; }
+    var d=dec(ch); out+=comp(k[0][d[0]],k[1][d[1]],k[2][d[2]]); }
+  $('aout').textContent=out;
+  var s=final?A.best:A.cur;
+  var pct=Math.max(0,Math.min(100,(s-baseScore)/(trueScore-baseScore)*100));
+  $('astat').textContent='재시작 '+(A.restart+1)+'/'+A.R+' · 시도 '+
+    ((A.restart*A.IT+A.it)/1000).toFixed(0)+'천 번 · 말이 되는 정도 '+pct.toFixed(0)+'%';
+}
+function finishAuto(){
+  stopAuto();
+  var right=0, tot=0;
+  for(var i=0;i<plain.length;i++){ if(!isKo(plain[i])) continue; tot++;
+    var d=dec(cipher[i]);
+    if(comp(A.bk[0][d[0]],A.bk[1][d[1]],A.bk[2][d[2]])===plain[i]) right++; }
+  var ms=(performance.now()-A.t0)/1000;
+  var pc=right/tot*100;
+  var f=$('aflag');
+  f.className = pc>95?'flag ok':'flag warn';
+  f.innerHTML='<b>'+ms.toFixed(1)+'초</b> 만에 <b>'+pc.toFixed(0)+'%</b>를 맞혔습니다 ('+right+'/'+tot+' 글자). '+
+    (pc>97 ? '사실상 완전 해독입니다.'
+     : '나머지는 <b>드물게 나온 자모</b>들이에요 — 몇 번 안 나오니 통계가 붙잡을 게 없습니다. '+
+       '거기서부터는 사람이 읽어서 고치는 게 빠릅니다. 통계가 90%를 하고 나머지는 눈이 합니다.');
+}
+
+/* ---------- 빈도표 ---------- */
+function freqTable(){
+  var rows=[['첫소리',CHO,FC,NC],['가운뎃소리',JUNG,FJ,NJ],['받침',JONG,FT,NT]], html='';
+  rows.forEach(function(r){
+    var tot=0,i; for(i=0;i<r[3];i++) tot+=r[2][i];
+    var ord=[]; for(i=0;i<r[3];i++) ord.push(i);
+    ord.sort(function(a,b){ return r[2][b]-r[2][a]; });
+    var top=ord.slice(0,8), mx=r[2][top[0]]/tot*100;
+    html+='<div class="ftab"><table style="margin-bottom:10px"><thead><tr><th>'+r[0]+' 상위 8</th>'+
+      top.map(function(k){return '<th>'+r[1][k]+'</th>';}).join('')+'</tr></thead><tbody><tr><td>비율</td>'+
+      top.map(function(k){ var p=r[2][k]/tot*100;
+        return '<td>'+p.toFixed(1)+'%<br><span class="bar" style="width:'+(p/mx*46).toFixed(0)+'px;background:'+
+          (r[0]==='첫소리'?'var(--cho)':r[0]==='가운뎃소리'?'var(--jung)':'var(--jong)')+'"></span></td>'; }).join('')+
+      '</tr></tbody></table></div>';
+  });
+  $('freq').innerHTML=html;
+  $('corp').textContent=CN.toLocaleString();
+  $('method').innerHTML='이 판의 통계는 <b>제가 이 대화에서 만든 한국어 글 '+CN.toLocaleString()+
+    '음절</b>에서 직접 센 것입니다. 기계 풀이는 음절 빈도와 첫소리·가운뎃소리 결합, 그리고 '+
+    '앞 글자 받침에서 다음 글자 첫소리로 넘어가는 확률을 함께 봅니다. '+
+    '세 가지 조합을 <b>말뭉치와 전혀 다른 소재의 글</b>(요리·편지·천문)로 시험해 고른 값이라, '+
+    '제 글투에만 맞춘 건 아닙니다.';
+}
+
+newPuzzle(); freqTable();
+
+window.__cr={
+  lvl:function(v){ lvl=v; newPuzzle(); },
+  plain:function(){ return plain; }, cipher:function(){ return cipher; },
+  reveal:function(){ $('reveal').click(); },
+  out:function(){ return $('out').textContent; },
+  meter:function(){ return $('mnum').textContent; },
+  auto:function(){ $('run').click(); },
+  autoDone:function(){ return raf===null && A && A.bk; },
+  autoText:function(){ return $('aout').textContent; },
+  autoFlag:function(){ return $('aflag').textContent; },
+  hint:function(){ $('hint').click(); },
+  chips:function(){ return document.querySelectorAll('#keys .chip').length; },
+  solveNow:function(){ // 시험용: 즉시 완전 풀이
+    var tk=tokenize(cipher); return score(tk,ANS[0],ANS[1],ANS[2]); }
+};
+})();
+</script>
+</body>
+</html>

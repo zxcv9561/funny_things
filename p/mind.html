@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>당신은 무작위가 될 수 있는가</title>
+<style>
+  :root{
+    --bg:#0a0b0e; --card:#13151a; --card2:#191c23; --ink:#f1efe9; --dim:#83868f;
+    --line:rgba(255,255,255,.10); --acc:#6fa8dc; --hit:#e0605a; --miss:#5fbf8a; --gold:#e0a05a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:30px 20px 80px}
+  h1{font-size:25px;margin:0 0 10px;letter-spacing:-.01em}
+  .lede{color:#b9bbc2;font-size:14px;line-height:1.85;margin:0 0 8px}
+  .lede b{color:var(--ink)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:16px}
+  .card h2{font-size:16px;margin:0 0 12px}
+  .card p{font-size:13.5px;line-height:1.85;color:#c4c6cd;margin:0 0 10px}
+  .card p b{color:var(--ink)}
+
+  .arena{display:flex;gap:26px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0 4px}
+  .score{text-align:center;min-width:150px}
+  .score .n{font-size:52px;font-weight:700;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .score .l{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.02em}
+  .score.me .n{color:var(--miss)}
+  .score.mc .n{color:var(--hit)}
+  .vs{font-size:13px;color:var(--dim);font-weight:700}
+
+  .picks{display:flex;gap:14px;margin:22px 0 6px}
+  .pick{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:14px;
+    padding:26px 10px;font-size:22px;font-weight:700;color:var(--ink);cursor:pointer;
+    transition:.09s;user-select:none;text-align:center}
+  .pick:hover{border-color:var(--acc);background:#1f232b}
+  .pick:active{transform:scale(.98)}
+  .pick small{display:block;font-size:11.5px;color:var(--dim);font-weight:500;margin-top:8px}
+  .pick:disabled{opacity:.4;cursor:default}
+
+  .strip{display:flex;gap:3px;margin:18px 0 4px;flex-wrap:wrap;min-height:16px}
+  .strip i{width:9px;height:16px;border-radius:2px;display:block;background:#2a2d35}
+  .strip i.h{background:var(--hit)}
+  .strip i.m{background:var(--miss)}
+  .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);
+    font-variant-numeric:tabular-nums;margin-top:10px}
+  .meta b{color:var(--ink)}
+  .call{text-align:center;font-size:13.5px;color:var(--dim);min-height:22px;margin-top:6px}
+  .call b{font-weight:700}
+  .call .yes{color:var(--hit)} .call .no{color:var(--miss)}
+
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+  button.btn{background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    padding:9px 14px;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+  button.btn:hover{border-color:var(--acc)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+  th{text-align:left;color:var(--dim);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05);color:#c4c6cd;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.bar{width:100%;white-space:normal}
+  .bb{height:10px;border-radius:3px;display:block;background:var(--acc)}
+  .bb.r{background:var(--gold)}
+  tr:last-child td{border-bottom:none}
+  .punch{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--gold);
+    border-radius:10px;padding:15px 17px;margin-top:14px;font-size:13.5px;line-height:1.9}
+  .punch b{color:var(--ink)}
+  .note{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .note b{color:var(--ink)}
+  .hide{display:none}
+  kbd{background:#22252d;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:11.5px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>당신은 무작위가 될 수 있는가</h1>
+  <p class="lede">아래 두 버튼을 <b>아무렇게나</b> 누르세요. 규칙 없이, 되는대로, 최대한 무작위로.<br>
+  누를 때마다 이 페이지는 <b>당신이 다음에 무엇을 누를지 미리 찍어둡니다.</b>
+  진짜 무작위라면 기계는 50%밖에 못 맞힙니다. 한번 보시죠.</p>
+
+  <div class="card">
+    <div class="arena">
+      <div class="score me"><div class="n" id="s-you">0</div><div class="l">당신의 승</div></div>
+      <div class="vs">VS</div>
+      <div class="score mc"><div class="n" id="s-cpu">0</div><div class="l">기계가 맞힌 횟수</div></div>
+      <div class="score"><div class="n" id="s-acc" style="color:var(--gold)">–</div><div class="l">기계 적중률</div></div>
+    </div>
+    <div class="picks">
+      <button class="pick" id="p-l">← 왼쪽<small>또는 ← 방향키</small></button>
+      <button class="pick" id="p-r">오른쪽 →<small>또는 → 방향키</small></button>
+    </div>
+    <div class="call" id="call">시작하려면 아무 쪽이나 누르세요</div>
+    <div class="strip" id="strip"></div>
+    <div class="meta"><span><b id="m-n">0</b> / 120 회</span><span id="m-hint">120회를 채우면 결과가 나옵니다</span></div>
+    <div class="row">
+      <button class="btn" id="reset">처음부터</button>
+      <button class="btn" id="finish">지금 결과 보기</button>
+    </div>
+  </div>
+
+  <div id="result" class="hide"></div>
+
+  <div class="card">
+    <h2>이 기계가 하는 일</h2>
+    <p>대단한 건 아닙니다. <b>당신의 최근 1~5개 입력을 보고, 예전에 같은 패턴 뒤에 무엇을 눌렀는지 세는 것</b>이 전부입니다.
+    길이별로 다섯 개의 예측기를 돌리고, 최근에 잘 맞힌 예측기에 더 큰 표를 줍니다. 그게 다입니다.</p>
+    <p>그런데 이 단순한 기계가 사람을 이깁니다. 사람은 무작위를 만들 때 <b>같은 걸 연달아 누르는 걸 불편해하기 때문</b>입니다.
+    진짜 동전은 앞면이 다섯 번 연속 나와도 아무렇지 않지만, 사람은 세 번쯤 같은 걸 누르면 슬슬 바꾸고 싶어집니다.
+    그 <b>과잉 교대</b>가 기계에게는 먹잇감입니다.</p>
+    <p>1953년 벨 연구소에서 데이비드 하겔바거가 릴레이로 이 기계를 실제로 만들었습니다. 사람을 상대로 9,795판을 겨뤄 5,218판을 이겼다고 전해집니다 —
+    <b>승률 53%.</b> 별것 아닌 것 같지만, 동전 던지기에서 53%면 카지노가 먹고사는 수준입니다.
+    소식을 들은 클로드 섀넌이 더 단순한 기계를 만들어 왔고, 두 기계를 맞붙이자 <b>섀넌의 것이 이겼습니다.</b>
+    지금 당신을 상대하고 있는 건 그 계보의 후손입니다.</p>
+    <div class="note">키보드 <kbd>←</kbd> <kbd>→</kbd> 로도 됩니다. 빠르게 누를수록 습관이 더 잘 드러납니다 —
+    <b>천천히 생각해서 누르면 오히려 기계를 이길 확률이 올라갑니다.</b> 그것도 직접 확인해 보세요.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id);};
+  var TARGET=120, ORDERS=[1,2,3,4,5];
+
+  var G;
+  function fresh(){
+    return {
+      seq:[],                 // 'L' / 'R'
+      hits:[],                // 기계가 맞혔는가
+      tbl:ORDERS.map(function(){ return {}; }),
+      w:ORDERS.map(function(){ return 1; }),
+      pending:null,           // 이번 판 기계의 예측
+      cpu:0, you:0, done:false
+    };
+  }
+
+  function ctx(k){
+    if(G.seq.length<k) return null;
+    return G.seq.slice(G.seq.length-k).join('');
+  }
+  function predict(){
+    var score=0, any=false;
+    for(var i=0;i<ORDERS.length;i++){
+      var k=ORDERS[i], c=ctx(k);
+      if(c===null) continue;
+      var e=G.tbl[i][c];
+      if(!e) continue;
+      var tot=e.L+e.R;
+      if(tot===0) continue;
+      // 라플라스 보정: 표본이 적은 문맥이 과신하지 않도록
+      var pL=(e.L+0.5)/(tot+1);
+      score += G.w[i]*(pL-0.5)*Math.min(1, tot/2);
+      any=true;
+    }
+    if(!any) return Math.random()<0.5?'L':'R';   // 아직 아는 게 없으면 동전
+    if(score===0) return Math.random()<0.5?'L':'R';
+    return score>0?'L':'R';
+  }
+  function learn(actual){
+    for(var i=0;i<ORDERS.length;i++){
+      var k=ORDERS[i], c=ctx(k);
+      if(c===null) continue;
+      var e=G.tbl[i][c] || (G.tbl[i][c]={L:0,R:0});
+      // 이 차수 예측기가 단독으로는 맞혔을지 채점해서 가중치를 조정한다
+      var solo = (e.L===e.R) ? null : (e.L>e.R?'L':'R');
+      if(solo!==null) G.w[i] *= (solo===actual ? 1.04 : 0.96);
+      G.w[i]=Math.max(0.15,Math.min(6,G.w[i]));
+      e[actual]++;
+    }
+  }
+
+  function play(choice){
+    if(G.done) return;
+    var guess=G.pending!==null?G.pending:predict();
+    var hit=(guess===choice);
+    learn(choice);
+    G.seq.push(choice); G.hits.push(hit);
+    if(hit) G.cpu++; else G.you++;
+    G.pending=predict();
+    paint(guess,choice,hit);
+    if(G.seq.length>=TARGET && !G.done) finish();
+  }
+
+  function paint(guess,choice,hit){
+    $('s-you').textContent=G.you;
+    $('s-cpu').textContent=G.cpu;
+    var n=G.seq.length;
+    $('s-acc').textContent=n?Math.round(G.cpu/n*100)+'%':'–';
+    $('m-n').textContent=n;
+    var s=$('strip'), keep=Math.min(n,72);
+    var html='';
+    for(var i=n-keep;i<n;i++) html+='<i class="'+(G.hits[i]?'h':'m')+'"></i>';
+    s.innerHTML=html;
+    if(guess!==undefined){
+      $('call').innerHTML='기계는 <b>'+(guess==='L'?'왼쪽':'오른쪽')+'</b>을 찍었고, 당신은 <b>'+
+        (choice==='L'?'왼쪽':'오른쪽')+'</b>을 눌렀습니다 — '+
+        (hit?'<b class="yes">읽혔습니다</b>':'<b class="no">피했습니다</b>');
+    }
+  }
+
+  /* ---------- 통계 ---------- */
+  function lgamma(x){
+    var c=[76.18009172947146,-86.50532032941677,24.01409824083091,
+           -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+    var y=x, t=x+5.5; t-=(x+0.5)*Math.log(t);
+    var s=1.000000000190015;
+    for(var j=0;j<6;j++) s+=c[j]/++y;
+    return -t+Math.log(2.5066282746310005*s/x);
+  }
+  function lchoose(n,k){ return lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1); }
+  function binomTail(n,k){            // P(X >= k), p=0.5
+    var s=0;
+    for(var i=k;i<=n;i++) s+=Math.exp(lchoose(n,i)-n*Math.LN2);
+    return Math.min(1,s);
+  }
+  function stats(){
+    var n=G.seq.length, sw=0, run=1, maxRun=1, L=0;
+    for(var i=0;i<n;i++){
+      if(G.seq[i]==='L') L++;
+      if(i>0){
+        if(G.seq[i]!==G.seq[i-1]){ sw++; run=1; }
+        else { run++; if(run>maxRun) maxRun=run; }
+      }
+    }
+    return { n:n, L:L, R:n-L, switchRate:n>1?sw/(n-1):0, maxRun:maxRun,
+             acc:G.cpu/n, p:binomTail(n,G.cpu) };
+  }
+  function triMap(){
+    var m={};
+    for(var i=3;i<G.seq.length;i++){
+      var c=G.seq.slice(i-3,i).join('');
+      var e=m[c]||(m[c]={L:0,R:0});
+      e[G.seq[i]]++;
+    }
+    return m;
+  }
+
+  function finish(){
+    G.done=true;
+    var s=stats(), m=triMap();
+    var rows=Object.keys(m).sort().map(function(c){
+      var e=m[c], t=e.L+e.R;
+      if(t<3) return '';
+      var pL=e.L/t, lean=Math.max(pL,1-pL);
+      var side=pL>=0.5?'왼쪽':'오른쪽';
+      return '<tr><td>'+c.replace(/L/g,'←').replace(/R/g,'→')+'</td>'+
+        '<td class="bar"><span class="bb'+(lean>=0.75?' r':'')+'" style="width:'+Math.round(lean*100)+'%"></span></td>'+
+        '<td>'+side+' '+Math.round(lean*100)+'%</td><td>'+t+'회</td></tr>';
+    }).filter(Boolean).join('');
+
+    var pv=s.p, pTxt = pv<0.0001 ? '0.01% 미만' : (pv*100).toFixed(2)+'%';
+    var verdict;
+    if(s.acc>=0.60) verdict='<b>완전히 읽혔습니다.</b> 당신의 손에는 뚜렷한 습관이 있습니다.';
+    else if(s.acc>=0.545) verdict='<b>기계가 이겼습니다.</b> 티가 안 날 만큼 미세하지만, 패턴이 있었습니다.';
+    else if(s.acc>=0.455) verdict='<b>거의 무작위였습니다.</b> 흔치 않은 결과입니다.';
+    else verdict='<b>당신이 이겼습니다.</b> 기계의 예측을 역이용하지 않았다면, 통계적으로 드문 일입니다.';
+
+    $('result').className='';
+    $('result').innerHTML=
+      '<div class="card"><h2>결과</h2>'+
+      '<div class="punch">'+verdict+'<br><br>'+
+      '기계는 '+s.n+'번 중 <b>'+G.cpu+'번</b>을 맞혔습니다 — 적중률 <b>'+(s.acc*100).toFixed(1)+'%</b>.<br>'+
+      '당신이 진짜 무작위였다면 이 정도 이상으로 맞힐 확률은 <b>'+pTxt+'</b>입니다.</div>'+
+      '<table><tbody>'+
+      '<tr><td style="width:190px;color:var(--dim)">왼쪽 / 오른쪽</td><td>'+s.L+' / '+s.R+' '+
+        '<span style="color:var(--dim)">(무작위 기대 '+(s.n/2)+' / '+(s.n/2)+')</span></td></tr>'+
+      '<tr><td style="color:var(--dim)">방향을 바꾼 비율</td><td><b>'+(s.switchRate*100).toFixed(1)+'%</b> '+
+        '<span style="color:var(--dim)">(무작위라면 50%. 사람은 대개 55~65%)</span></td></tr>'+
+      '<tr><td style="color:var(--dim)">같은 쪽 최장 연속</td><td><b>'+s.maxRun+'회</b> '+
+        '<span style="color:var(--dim)">('+s.n+'번이면 무작위 기대값은 대략 '+Math.round(Math.log2(s.n))+'~'+(Math.round(Math.log2(s.n))+2)+'회)</span></td></tr>'+
+      '</tbody></table>'+
+      (rows?'<h2 style="margin-top:22px">당신의 버릇 지도</h2>'+
+        '<p style="font-size:12.5px;color:var(--dim);margin:0">직전 세 번이 이랬을 때 당신이 다음에 고른 쪽입니다. 금색은 75% 이상 한쪽으로 쏠린 경우 — 여기가 읽힌 지점입니다.</p>'+
+        '<table><thead><tr><th>직전 3회</th><th>쏠림</th><th>주로 고른 쪽</th><th>표본</th></tr></thead><tbody>'+rows+'</tbody></table>':'')+
+      '<div class="note">방향을 바꾼 비율이 50%보다 높게 나왔다면, 그게 사람이 무작위를 흉내 낼 때 가장 흔하게 새는 지점입니다. '+
+      '<b>"방금 왼쪽을 눌렀으니 이번엔 오른쪽"</b>이라는 생각 자체가 이미 규칙입니다.</div>'+
+      '</div>';
+    $('m-hint').textContent='끝났습니다 · 아래 결과를 보세요';
+    $('result').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function reset(){
+    G=fresh(); $('result').className='hide';
+    $('call').textContent='시작하려면 아무 쪽이나 누르세요';
+    $('m-hint').textContent='120회를 채우면 결과가 나옵니다';
+    paint();
+  }
+  $('p-l').onclick=function(){ play('L'); };
+  $('p-r').onclick=function(){ play('R'); };
+  $('reset').onclick=reset;
+  $('finish').onclick=function(){ if(G.seq.length>=20 && !G.done) finish();
+    else if(!G.done) $('call').textContent='최소 20회는 눌러야 의미 있는 결과가 나옵니다'; };
+  window.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft'){ e.preventDefault(); play('L'); }
+    if(e.key==='ArrowRight'){ e.preventDefault(); play('R'); }
+  });
+
+  reset();
+  window.__mr={ play:play, get G(){return G;}, stats:stats, binomTail:binomTail, reset:reset };
+})();
+</script>
+</body>
+</html>
