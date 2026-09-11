@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미리 짜고 나올 수 없는 답</title>
+<style>
+  :root{ --bg:#0b0c10; --panel:#14161d; --panel2:#1b1e27; --ink:#eef1f6; --dim:#848b99;
+         --line:rgba(255,255,255,.11); --acc:#6fb2f0; --ok:#57c98a; --warn:#e0a52a; --bad:#e8734a;
+         --vio:#b98cf0; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 70px}
+  h1{font-size:23px;margin:0 0 7px;letter-spacing:-.01em}
+  .lede{color:var(--dim);font-size:13.5px;line-height:1.85;margin:0 0 16px;max-width:74ch}
+  .lede b{color:var(--ink)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:13px}
+  .card h2{font-size:14.5px;margin:0 0 3px;font-weight:600}
+  .card p.cap{font-size:12.5px;color:var(--dim);margin:0 0 12px;line-height:1.7}
+  .card p.cap b{color:var(--ink)}
+  .card p{font-size:13.5px;line-height:1.9;color:#c3c7d1;margin:0 0 10px}
+  .card p b{color:var(--ink)}
+  button,input{font:inherit}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:6px 11px;color:var(--dim);font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .btn:hover{color:var(--ink);border-color:var(--acc)}
+  .btn.on{border-color:var(--acc);color:var(--ink);font-weight:700;background:rgba(111,178,240,.13)}
+  .btn.big{font-size:13.5px;padding:8px 14px;font-weight:700;color:var(--ink);border-color:var(--acc)}
+  .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .row .lab{font-size:12px;color:var(--dim)}
+  input[type=range]{accent-color:var(--acc);width:130px}
+  .two{display:grid;grid-template-columns:1fr 248px;gap:16px}
+  .two>div{min-width:0}
+  .num{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px}
+  .num .t{font-size:11px;color:var(--dim);margin-bottom:2px}
+  .num .v{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.25}
+  .num .s{font-size:11px;color:var(--dim);margin-top:2px}
+  .num.a .v{color:var(--acc)} .num.b .v{color:var(--ok)} .num.c .v{color:var(--bad)}
+  .num.v2 .v{color:var(--vio)}
+  .flag{border-radius:10px;padding:11px 13px;margin-top:11px;font-size:13px;line-height:1.8;
+    background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--dim);color:#c3c7d1}
+  .flag.ok{border-left-color:var(--ok)} .flag.bad{border-left-color:var(--bad)}
+  .flag.warn{border-left-color:var(--warn)} .flag.vi{border-left-color:var(--vio)}
+  .flag b{color:var(--ink)}
+  .hint{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .hint b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;color:var(--dim);font-weight:500;padding:6px 5px;border-bottom:1px solid var(--line);font-size:11.5px}
+  th:first-child{text-align:left}
+  td{padding:7px 5px;border-bottom:1px solid rgba(255,255,255,.05);color:#c3c7d1;text-align:right}
+  td:first-child{text-align:left;color:var(--ink);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.g{color:var(--ok);font-weight:700} td.r{color:var(--bad);font-weight:700}
+  canvas{display:block;width:100%;height:auto;border-radius:11px;border:1px solid var(--line);
+    background:#07080c;touch-action:none}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .src{font-size:11.5px;color:var(--dim);line-height:1.8;margin-top:10px}
+  code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px}
+  .st{display:grid;grid-template-columns:auto 1fr 1fr;gap:5px;font-size:12px;margin-top:10px;
+      max-width:330px;align-items:center}
+  .st .h{color:var(--dim);font-size:11px;text-align:center}
+  .st .n{color:var(--dim);font-size:11.5px;white-space:nowrap}
+  .st button{width:100%}
+  @media (max-width:820px){ .two{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>미리 짜고 나올 수 없는 답</h1>
+  <p class="lede">두 사람을 <b>멀리 떼어 놓습니다.</b> 서로 연락은 못 해요.
+  각자에게 <b>카드 한 장</b>을 줍니다 — <b>파랑</b> 아니면 <b>빨강</b>, 동전 던지기로.
+  카드를 보고 <b>○ 또는 ✕</b>를 냅니다.<br>
+  <b>이기는 규칙은 한 줄</b>입니다 — <b>둘 다 빨강을 받았을 때만 서로 다르게</b>,
+  나머지 세 경우는 <b>서로 같게</b> 내면 이깁니다.<br>
+  들어가기 전에 작전은 <b>얼마든지 짤 수 있습니다.</b> 그런데 무슨 수를 써도
+  <b>이길 확률 75%가 천장</b>이에요. 이 판에서 <b>직접 작전을 짜서</b> 그 천장을 확인합니다.<br>
+  그다음 — 두 사람에게 <b>얽힌 알갱이를 하나씩</b> 쥐여 줍니다. 여전히 연락은 못 하는데,
+  <b>85%를 넘깁니다.</b></p>
+
+  <div class="card">
+    <h2>1 · 아무리 짜도 넘을 수 없는 천장</h2>
+    <p class="cap">오른쪽 표가 <b>두 사람의 작전</b>입니다. 「파랑 카드를 받으면 ○, 빨강이면 ✕」처럼
+    <b>미리 정해 두는</b> 거예요. 버튼을 눌러 바꿔 가며 <b>75%를 넘겨 보세요.</b></p>
+    <div class="two">
+      <div>
+        <canvas id="c1" width="660" height="336"></canvas>
+        <div class="row">
+          <button class="btn big" id="run1">1만 판 돌리기</button>
+          <button class="btn" id="slow1">한 판씩 천천히</button>
+          <button class="btn" id="best1">이길 수 있는 작전으로</button>
+          <button class="btn" id="all1">16가지 전부 해 보기</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="coin">동전까지 섞어 10만 번 시도</button>
+          <span class="lab" id="coinv"></span>
+        </div>
+      </div>
+      <div>
+        <div class="st">
+          <div class="h"></div><div class="h" style="color:#6fb2f0">파랑이면</div>
+          <div class="h" style="color:#e8734a">빨강이면</div>
+          <div class="n">앨리스는</div>
+          <button class="btn" data-p="0" data-q="0">○</button>
+          <button class="btn" data-p="0" data-q="1">○</button>
+          <div class="n">밥은</div>
+          <button class="btn" data-p="1" data-q="0">○</button>
+          <button class="btn" data-p="1" data-q="1">○</button>
+        </div>
+        <div class="num a" style="margin-top:10px"><div class="t">이 작전의 승률</div><div class="v" id="wr1">–</div>
+          <div class="s" id="wr1s">작전을 정하고 돌려 보세요</div></div>
+        <div class="num c"><div class="t">아무도 못 넘는 천장</div><div class="v">75%</div>
+          <div class="s">벨이 1964년에 증명</div></div>
+        <div class="flag" id="f1" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div id="t1box" class="scroll" style="display:none"><table id="t1" style="margin-top:12px;min-width:470px"></table></div>
+    <div class="hint">왜 75%가 천장일까요. <b>연락을 못 하기 때문</b>입니다.
+    앨리스의 답은 <b>자기가 받은 카드</b>에만 달려 있을 수밖에 없어요 — 밥이 뭘 받았는지 모르니까요.<br>
+    그러면 작전이란 결국 <b>「파랑이면 이거, 빨강이면 이거」</b>라는 쪽지 한 장입니다.
+    그런 쪽지는 <b>한 사람당 네 가지</b>(○○ / ○✕ / ✕○ / ✕✕), 두 사람이면 <b>16가지</b>가 전부예요.<br>
+    <b>그 16가지를 하나씩 다 해 보면 됩니다.</b> 네 가지 카드 조합 중
+    <b>셋까지는 맞출 수 있는데, 넷을 다 맞추는 쪽지는 없습니다.</b>
+    「16가지 전부 해 보기」를 눌러 보세요 — 나오는 승률이 <b>75%와 25% 딱 두 가지</b>뿐입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · 얽힌 알갱이를 하나씩 쥐여 주면</h2>
+    <p class="cap">두 사람에게 <b>한 쌍에서 갈라져 나온 알갱이</b>를 하나씩 주고,
+    <b>돌릴 수 있는 안경</b>을 하나씩 줍니다. 알갱이가 안경을 통과하면 ○, 막히면 ✕예요.
+    <b>카드 색에 따라 안경을 몇 도로 돌릴지</b>를 미리 정해 둡니다 — 그 네 개를 당신이 고르세요.<br>
+    핵심은 하나입니다. <b>두 안경의 각도가 같으면 두 알갱이는 늘 같은 답</b>을 내고,
+    <b>각도를 벌릴수록 달라질 확률이 커집니다.</b></p>
+    <div class="two">
+      <div>
+        <canvas id="c2" width="660" height="336"></canvas>
+        <div class="row">
+          <button class="btn big" id="run2">1만 판 돌리기</button>
+          <button class="btn" id="slow2">한 판씩 천천히</button>
+          <button class="btn" id="opt2">가장 좋은 각도로</button>
+          <button class="btn" id="rst2">전부 0°로</button>
+        </div>
+        <div class="row">
+          <span class="lab">앨리스 안경</span>
+          <span class="lab" style="color:#6fb2f0;font-weight:700">파랑</span>
+          <input type="range" id="A0" min="-90" max="90" step="0.5" value="0" style="width:90px">
+          <span class="lab" id="A0v"></span>
+          <span class="lab" style="color:#e8734a;font-weight:700">빨강</span>
+          <input type="range" id="A1" min="-90" max="90" step="0.5" value="0" style="width:90px">
+          <span class="lab" id="A1v"></span>
+        </div>
+        <div class="row">
+          <span class="lab">밥의 안경</span>
+          <span class="lab" style="color:#6fb2f0;font-weight:700">파랑</span>
+          <input type="range" id="B0" min="-90" max="90" step="0.5" value="0" style="width:90px">
+          <span class="lab" id="B0v"></span>
+          <span class="lab" style="color:#e8734a;font-weight:700">빨강</span>
+          <input type="range" id="B1" min="-90" max="90" step="0.5" value="0" style="width:90px">
+          <span class="lab" id="B1v"></span>
+        </div>
+      </div>
+      <div>
+        <div class="num b"><div class="t">이 각도의 승률</div><div class="v" id="wr2">–</div>
+          <div class="s" id="wr2s"></div></div>
+        <div class="num v2"><div class="t">벨 점수 (2를 넘으면 흉내 불가)</div><div class="v" id="sv">–</div>
+          <div class="s">고전 한계 2 · 양자 한계 2.828</div></div>
+        <div class="num a"><div class="t">이론 승률</div><div class="v" id="th2">–</div>
+          <div class="s">1/2 + S/8</div></div>
+        <div class="flag" id="f2" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div class="scroll"><table id="t2q" style="margin-top:12px;min-width:480px"></table></div>
+    <div class="hint"><b>「가장 좋은 각도로」가 왜 좋은지</b>는 위 표를 보면 바로 보입니다.
+    세 경우는 <b>같게</b> 내야 하고 한 경우만 <b>다르게</b> 내야 하죠.
+    각도 차이를 <b>22.5°</b>로 두면 두 알갱이는 <b>85% 확률로 같은 답</b>을 냅니다.
+    그런데 「둘 다 빨강」인 경우만 각도 차이가 <b>67.5°</b>가 되게 배치하면,
+    거기서는 <b>85% 확률로 다른 답</b>이 나와요. <b>네 경우 모두 85%</b>가 되는 겁니다.<br>
+    그리고 <b>속임수는 없습니다.</b> 두 사람은 여전히 연락을 못 해요 —
+    앨리스의 답만 따로 보면 <b>정확히 반반</b>이고, 밥이 안경을 어떻게 돌리든 그 반반은
+    <b>꿈쩍도 안 합니다</b>(3번 판에서 직접 잽니다). 달라진 건 각자의 답이 아니라
+    <b>둘을 맞춰 봤을 때의 궁합</b>뿐이에요.</div>
+  </div>
+
+  <div class="card">
+    <h2>3 · 흉내 낼 수 없는 이유 — 확률로 보면 보입니다</h2>
+    <p class="cap">두 안경의 <b>각도 차이</b>만 바꿔 가며 <b>두 사람의 답이 같게 나올 확률</b>을 잽니다.
+    <b>점</b>은 실제로 뽑아 잰 값이고, <b>선</b>은 두 가지 설명이 예측하는 값이에요.</p>
+    <div class="two">
+      <div>
+        <canvas id="c3" width="660" height="320"></canvas>
+        <div class="row">
+          <button class="btn big" id="run3">재 보기</button>
+          <button class="btn big" id="two3">「두 걸음」 따져 보기</button>
+          <button class="btn" id="sig3">신호를 보낼 수 있나 검사</button>
+          <span class="lab" id="p3"></span>
+        </div>
+      </div>
+      <div>
+        <div class="num a"><div class="t">22.5° 벌리면 답이 다를 확률</div><div class="v" id="p1">–</div>
+          <div class="s">한 걸음</div></div>
+        <div class="num b"><div class="t">두 걸음이면 아무리 커야</div><div class="v" id="p2">–</div>
+          <div class="s">한 걸음 × 2</div></div>
+        <div class="num c"><div class="t">45° 벌리면 실제로 다를 확률</div><div class="v" id="p3v">–</div>
+          <div class="s">두 걸음 간 결과</div></div>
+        <div class="flag" id="f3" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div class="flag" id="f3b" style="display:none"></div>
+    <div class="hint"><b>「미리 답을 들고 떠났다」면 이렇게 됩니다.</b> 알갱이가 0°, 22.5°, 45° 세 각도에 대한
+    답을 <b>전부 들고</b> 떠났다고 해 보죠. 그러면 <b>0°의 답과 45°의 답이 다르려면</b>,
+    중간의 22.5°를 지나면서 <b>0°↔22.5° 사이에서 바뀌었거나 22.5°↔45° 사이에서 바뀌었어야</b> 합니다.
+    다른 길이 없어요.<br>
+    그러니 <b>45°에서 다를 확률은 22.5°에서 다를 확률의 두 배를 넘을 수 없습니다.</b>
+    「두 걸음 따져 보기」를 눌러 실제 숫자를 확인해 보세요 — <b>넘습니다.</b>
+    그러면 처음 가정이 틀린 겁니다.<br>
+    그림으로 보면 같은 이야기예요. 미리 들고 떠난 답으로 만들 수 있는 건 <b>곧은 직선</b>이고,
+    실제로 나오는 건 <b>둥근 곡선</b>입니다. <b>22.5°에서 85.4% 대 75%</b> —
+    이 두 숫자, 어디서 봤죠? <b>1번 판과 2번 판의 승률</b>입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>4 · 짧은 이야기</h2>
+    <p>1935년, 세 사람이 논문 하나를 냅니다. 요지는 「양자역학은 <b>틀리진 않았지만 빠진 게 있다</b>」였어요.
+    멀리 떨어진 두 알갱이가 저렇게 짝지어 나오려면 <b>미리 답을 들고 떠났다고 봐야</b> 말이 되지 않느냐고요.
+    아인슈타인은 그걸 <b>「유령 같은 원격 작용」</b>이라고 불렀습니다. 비꼬는 말이었죠.</p>
+    <p>29년 동안 이건 <b>철학 논쟁</b>이었습니다. 실험으로 가를 방법이 없었으니까요.</p>
+    <p>1964년, 한 물리학자가 <b>가를 방법</b>을 찾아냅니다. 그것도 두 쪽짜리 논문으로요.
+    핵심은 이겁니다 — 「미리 답을 들고 떠났다면, <b>어떤 답을 들고 떠났든</b>,
+    이 숫자는 <b>2를 넘을 수 없다</b>」. 넘을 수 없다는 걸 <b>증명</b>한 거예요.
+    그리고 양자역학은 <b>2.828</b>을 예측합니다.</p>
+    <p>이제 남은 건 <b>실제로 재 보는 일</b>뿐이었습니다. 1970년대부터 실험이 시작됐고,
+    허술한 구멍들을 하나씩 막는 데 <b>50년</b>이 걸렸습니다. 결과는 매번 같았어요 — <b>2를 넘었습니다.</b>
+    2022년, 이 실험들에 노벨 물리학상이 주어졌습니다.</p>
+    <p>그러니 이 판에서 당신이 못 넘은 75%는 <b>당신이 작전을 못 짜서</b>가 아닙니다.
+    <b>아무도 못 짭니다.</b> 그런데 자연은 짭니다.</p>
+    <div class="row">
+      <button class="btn big" id="ver">검산 전부 돌리기</button>
+      <span class="lab" id="pv"></span>
+    </div>
+    <div class="scroll"><table id="t4" style="margin-top:12px;min-width:560px"></table></div>
+    <div class="flag" id="f4" style="display:none"></div>
+    <div class="hint" id="method"></div>
+    <div class="src" id="sources"></div>
+  </div>
+</div>
+<script>
+"use strict";
+var $=function(id){return document.getElementById(id);};
+var RS=2463534242;
+function rnd(){ RS^=RS<<13; RS^=RS>>>17; RS^=RS<<5; RS>>>=0; return RS/4294967296; }
+var PI=Math.PI, D=PI/180;
+
+/* ================= 공통 그리기 ================= */
+var GREEN='#57c98a', RED='#e8734a', BLUE='#6fb2f0', VIO='#b98cf0', AMB='#e0a52a';
+function booth(g,x,y,w,h,name,q,ans,col){
+  g.save();
+  g.fillStyle='rgba(255,255,255,.035)';
+  g.strokeStyle='rgba(255,255,255,.15)'; g.lineWidth=1;
+  g.beginPath(); g.roundRect(x,y,w,h,10); g.fill(); g.stroke();
+  g.fillStyle='rgba(132,139,153,.95)'; g.font='700 12px system-ui,sans-serif'; g.textAlign='center';
+  g.fillText(name, x+w/2, y+18);
+  g.font='600 10.5px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.7)';
+  g.fillText('받은 카드', x+w*0.28, y+38); g.fillText('낸 답', x+w*0.72, y+38);
+  if(q===null){ g.fillStyle='rgba(255,255,255,.11)';
+    g.beginPath(); g.roundRect(x+w*0.28-17,y+48,34,24,5); g.fill(); }
+  else { g.fillStyle= q? 'rgba(232,115,74,.85)':'rgba(111,178,240,.85)';
+    g.beginPath(); g.roundRect(x+w*0.28-17,y+48,34,24,5); g.fill();
+    g.fillStyle='#0b0c10'; g.font='800 11px system-ui,sans-serif';
+    g.fillText(q? '빨강':'파랑', x+w*0.28, y+64); }
+  g.font='800 24px system-ui,sans-serif';
+  g.fillStyle= ans===null? 'rgba(255,255,255,.13)' : col;
+  g.fillText(ans===null?'?':(ans? '✕':'○'), x+w*0.72, y+68);
+  g.restore();
+}
+function strip(g,x,y,w,h,hist){
+  g.save();
+  var n=Math.min(hist.length,72), cw=w/72;
+  for(var i=0;i<n;i++){
+    var v=hist[hist.length-n+i];
+    g.fillStyle= v? 'rgba(87,201,138,.85)':'rgba(232,115,74,.85)';
+    g.fillRect(x+i*cw, y, cw-1.5, h);
+  }
+  for(var j=n;j<72;j++){ g.fillStyle='rgba(255,255,255,.05)'; g.fillRect(x+j*cw,y,cw-1.5,h); }
+  g.fillStyle='rgba(132,139,153,.7)'; g.font='600 10px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('최근 판 (초록=이김)', x, y-6);
+  g.restore();
+}
+function bar(g,x,y,w,h,p,extra){
+  var quantum=!!extra;
+  g.save();
+  g.fillStyle='rgba(255,255,255,.06)'; g.beginPath(); g.roundRect(x,y,w,h,6); g.fill();
+  if(p!==null){
+    var gr=g.createLinearGradient(x,0,x+w,0);
+    gr.addColorStop(0,'rgba(111,178,240,.9)'); gr.addColorStop(1, (quantum&&p>0.7501)? VIO:'rgba(111,178,240,.9)');
+    g.fillStyle=gr; g.beginPath(); g.roundRect(x,y,Math.max(3,w*p),h,6); g.fill();
+  }
+  function mark(v,col,txt,al,dy){
+    var mx=x+w*v;
+    g.strokeStyle=col; g.lineWidth=2; g.setLineDash([3,3]);
+    g.beginPath(); g.moveTo(mx,y-7); g.lineTo(mx,y+h+7); g.stroke(); g.setLineDash([]);
+    g.fillStyle=col; g.font='700 10.5px system-ui,sans-serif'; g.textAlign=al||'center';
+    g.fillText(txt, mx+(al==='right'?-5:(al==='left'?5:0)), y+h+(dy||20));
+  }
+  mark(0.75, RED, '고전 천장 75%', extra?'right':'center');
+  if(extra) mark(0.8535533906, VIO, '양자 85.36%', 'left');
+  if(p!==null){
+    g.fillStyle='#eef1f6'; g.font='800 15px system-ui,sans-serif'; g.textAlign='left';
+    g.fillText((p*100).toFixed(2)+'%', x, y-9);
+  }
+  g.fillStyle='rgba(132,139,153,.6)'; g.font='600 10px system-ui,sans-serif'; g.textAlign='right';
+  g.fillText('100%', x+w, y-9);
+  g.restore();
+}
+function source(g,cx,cy,t,ent){
+  g.save();
+  var gr=g.createRadialGradient(cx,cy,0,cx,cy,18);
+  gr.addColorStop(0, ent?'rgba(185,140,240,.9)':'rgba(224,165,42,.85)');
+  gr.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=gr; g.beginPath(); g.arc(cx,cy,18,0,7); g.fill();
+  g.fillStyle= ent? VIO:AMB; g.beginPath(); g.arc(cx,cy,5,0,7); g.fill();
+  g.fillStyle='rgba(132,139,153,.8)'; g.font='600 10.5px system-ui,sans-serif'; g.textAlign='center';
+  g.fillText(ent?'얽힌 쌍이 갈라진다':'카드를 나눠 준다', cx, cy+32);
+  if(t!==null && t>=0 && t<=1){
+    var d=t*150;
+    g.fillStyle= ent? 'rgba(185,140,240,.95)':'rgba(224,165,42,.95)';
+    g.beginPath(); g.arc(cx-d,cy,4.5,0,7); g.fill();
+    g.beginPath(); g.arc(cx+d,cy,4.5,0,7); g.fill();
+  }
+  g.restore();
+}
+
+/* ================= 1번 판 : 고전 ================= */
+var SA=[0,1], SB=[1,1];                  /* 질문 0/1 에 대한 답 */
+var h1=[], win1=0, tot1=0, slow1=null;
+var c1=$('c1'), g1=c1.getContext('2d');
+function playC(x,y){ return {a:SA[x], b:SB[y], win:((SA[x]^SB[y])===(x&y))}; }
+function exactC(A,B){                     /* 네 질문 조합에 대한 정확한 승률 */
+  var w=0;
+  for(var x=0;x<2;x++) for(var y=0;y<2;y++) if(((A[x]^B[y])===(x&y))) w++;
+  return w/4;
+}
+function draw1(){
+  var g=g1, W=660, H=336;
+  g.fillStyle='#07080c'; g.fillRect(0,0,W,H);
+  var q1=slow1? slow1.x:null, q2=slow1? slow1.y:null;
+  var a1=(slow1&&slow1.phase>=2)? slow1.a:null, b1=(slow1&&slow1.phase>=2)? slow1.b:null;
+  booth(g,26,24,170,92,'앨리스',q1,a1,BLUE);
+  booth(g,W-196,24,170,92,'밥',q2,b1,GREEN);
+  source(g,W/2,68, slow1? Math.min(1,slow1.t):null, false);
+  /* 이 작전이 네 조합에서 맞는지 */
+  var MX=W/2, MY=136, CS=28;
+  g.save();
+  g.fillStyle='rgba(132,139,153,.85)'; g.font='600 10.5px system-ui,sans-serif'; g.textAlign='center';
+  g.fillText('네 가지 카드 조합에서 이 작전이 맞는가', MX, MY-8);
+  var CW2=CS*4.0;
+  g.font='700 10px system-ui,sans-serif';
+  g.fillStyle='rgba(111,178,240,.9)'; g.fillText('밥 파랑', MX-CW2/2-3, MY+10);
+  g.fillStyle='rgba(232,115,74,.9)';  g.fillText('밥 빨강', MX+CW2/2+3, MY+10);
+  g.textAlign='right'; g.font='700 10px system-ui,sans-serif';
+  g.fillStyle='rgba(111,178,240,.9)'; g.fillText('앨리스 파랑', MX-CW2-14, MY+36);
+  g.fillStyle='rgba(232,115,74,.9)';  g.fillText('앨리스 빨강', MX-CW2-14, MY+36+CS+4);
+  for(var xq=0;xq<2;xq++) for(var yq=0;yq<2;yq++){
+    var need=(xq&yq);                         /* 1이면 다르게, 0이면 같게 */
+    var got=(SA[xq]^SB[yq]);
+    var okc=(got===need);
+    var cx=MX-CW2+yq*CW2, cy=MY+18+xq*(CS+4);
+    g.fillStyle= okc? 'rgba(87,201,138,.15)':'rgba(232,115,74,.15)';
+    g.beginPath(); g.roundRect(cx+3,cy,CW2-6,CS,6); g.fill();
+    g.strokeStyle= okc? 'rgba(87,201,138,.45)':'rgba(232,115,74,.45)'; g.lineWidth=1; g.stroke();
+    g.textAlign='left';
+    g.font='700 9.5px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.9)';
+    g.fillText(need? '달라야':'같아야', cx+12, cy+CS/2+3.5);
+    g.font='800 12.5px system-ui,sans-serif'; g.fillStyle='rgba(238,241,246,.95)';
+    g.fillText((SA[xq]? '✕':'○')+' '+(SB[yq]? '✕':'○'), cx+57, cy+CS/2+4.5);
+    g.font='800 14px system-ui,sans-serif'; g.fillStyle= okc? GREEN:RED; g.textAlign='center';
+    g.fillText(okc? '✓':'✗', cx+CW2-15, cy+CS/2+5);
+  }
+  g.restore();
+  if(slow1 && slow1.phase>=3){
+    g.save(); g.textAlign='left'; g.font='800 13px system-ui,sans-serif';
+    g.fillStyle= slow1.win? GREEN:RED;
+    g.fillText(slow1.win? '이겼다':'졌다', MX+CS*2.6+26, MY+38);
+    g.font='600 10.5px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.85)';
+    g.fillText('두 답: '+(slow1.a?'✕':'○')+' 와 '+(slow1.b?'✕':'○'), MX+CS*2.6+26, MY+56);
+    g.fillText((slow1.x&slow1.y)? '달라야 했다':'같아야 했다', MX+CS*2.6+26, MY+72);
+    g.restore();
+  }
+  strip(g,26,244,W-52,20,h1);
+  bar(g,26,292,W-52,20, tot1? win1/tot1 : null, false);
+  out1();
+}
+function out1(){
+  var ex=exactC(SA,SB);
+  $('wr1').textContent= tot1? (win1/tot1*100).toFixed(2)+'%' : (ex*100).toFixed(0)+'%';
+  $('wr1s').textContent= tot1? (tot1.toLocaleString()+'판 · 이론값 '+(ex*100).toFixed(0)+'%')
+                             : '이 작전의 정확한 승률';
+  $('wr1').parentNode.className='num '+(ex>0.7?'b':'c');
+  var f=$('f1');
+  if(ex>=0.75){ f.className='flag warn';
+    f.innerHTML='<b>이 작전은 75%짜리입니다.</b> 네 가지 질문 조합 중 <b>셋을 맞추고 하나를 놓쳐요.</b> '+
+      '작전을 아무리 바꿔 봐도 <b>이보다 나은 건 없습니다</b> — 「16가지 전부 해 보기」로 확인하세요.'; }
+  else { f.className='flag bad';
+    f.innerHTML='이 작전은 <b>'+(ex*100).toFixed(0)+'%</b>입니다. 네 조합 중 <b>'+(ex*4)+'개</b>만 맞아요. '+
+      '버튼을 눌러 답을 바꿔 가며 <b>75%를 만드는 작전</b>을 찾아보세요.'; }
+}
+function syncBtns(){
+  [].forEach.call(document.querySelectorAll('.st button'),function(b){
+    var p=+b.dataset.p, q=+b.dataset.q, v=(p?SB:SA)[q];
+    b.textContent= v? '✕':'○'; b.classList.toggle('on',v===1);
+  });
+}
+document.querySelector('.st').onclick=function(ev){
+  var b=ev.target.closest('button'); if(!b) return;
+  var p=+b.dataset.p, q=+b.dataset.q;
+  if(p) SB[q]^=1; else SA[q]^=1;
+  win1=0; tot1=0; h1=[]; slow1=null; syncBtns(); draw1();
+};
+$('run1').onclick=function(){
+  slow1=null;
+  for(var i=0;i<10000;i++){
+    var x=rnd()<0.5?0:1, y=rnd()<0.5?0:1, r=playC(x,y);
+    tot1++; if(r.win) win1++; h1.push(r.win?1:0);
+  }
+  if(h1.length>200) h1=h1.slice(-200);
+  draw1();
+};
+$('best1').onclick=function(){ SA=[0,0]; SB=[0,0]; win1=0;tot1=0;h1=[]; slow1=null; syncBtns(); draw1(); };
+$('slow1').onclick=function(){
+  if(slow1){ slow1=null; this.classList.remove('on'); draw1(); return; }
+  this.classList.add('on');
+  slow1={t:0,phase:0,x:rnd()<0.5?0:1,y:rnd()<0.5?0:1,a:0,b:0,win:false};
+};
+$('all1').onclick=function(){
+  var h='<thead><tr><th>앨리스 (질문0, 질문1)</th><th>밥 (질문0, 질문1)</th>'+
+        '<th>맞히는 조합</th><th>승률</th></tr></thead><tbody>';
+  var cnt={}, rows=[];
+  for(var A=0;A<4;A++) for(var B=0;B<4;B++){
+    var Aa=[A&1,(A>>1)&1], Bb=[B&1,(B>>1)&1], p=exactC(Aa,Bb);
+    cnt[p]=(cnt[p]||0)+1;
+    rows.push([Aa,Bb,p]);
+  }
+  rows.sort(function(u,v){ return v[2]-u[2]; });
+  rows.forEach(function(r){
+    h+='<tr><td>('+r[0][0]+', '+r[0][1]+')</td><td>('+r[1][0]+', '+r[1][1]+')</td>'+
+       '<td>'+(r[2]*4)+' / 4</td><td class="'+(r[2]>=0.75?'g':'r')+'">'+(r[2]*100).toFixed(0)+'%</td></tr>';
+  });
+  $('t1').innerHTML=h+'</tbody>'; $('t1box').style.display='';
+  var ks=Object.keys(cnt).map(Number).sort(function(a,b){return b-a;});
+  var f=$('f1'); f.className='flag ok';
+  f.innerHTML='<b>16가지를 전부 계산했습니다.</b> 나오는 승률은 놀랍게도 <b>딱 두 가지</b>예요 — '+
+    ks.map(function(k){ return '<b>'+(k*100).toFixed(0)+'%</b>가 '+cnt[k]+'가지'; }).join(', ')+'. '+
+    '<b>4개를 다 맞추는 조합은 존재하지 않습니다.</b> 이건 표본이 모자라서가 아니라 '+
+    '<b>16가지를 하나도 빠짐없이 세어 본 결과</b>입니다.';
+};
+$('coin').onclick=function(){
+  var best=0;
+  for(var t=0;t<100000;t++){
+    var w1=rnd(), w2=rnd()*(1-w1), w3=1-w1-w2, ws=[w1,w2,w3], p=0;
+    for(var k=0;k<3;k++){
+      var m=Math.floor(rnd()*16), Aa=[m&1,(m>>1)&1], Bb=[(m>>2)&1,(m>>3)&1];
+      p+=ws[k]*exactC(Aa,Bb);
+    }
+    if(p>best) best=p;
+  }
+  $('coinv').textContent='최고 '+(best*100).toFixed(4)+'%';
+  var f=$('f1'); f.className='flag ok';
+  f.innerHTML='<b>동전까지 써 봤습니다.</b> 두 사람이 <b>같은 난수표</b>를 나눠 갖고 매 판 작전을 '+
+    '무작위로 바꾸는 거예요. 10만 가지 섞는 방법을 시도한 최고가 <b>'+(best*100).toFixed(2)+'%</b>. '+
+    '당연합니다 — <b>여러 작전의 평균은 그중 최고보다 좋을 수 없으니까요.</b> '+
+    '난수는 <b>절대로</b> 천장을 올려 주지 못합니다.';
+};
+
+/* ================= 2번 판 : 양자 ================= */
+var AN=[0,0,0,0];                         /* A0,A1,B0,B1 (라디안) */
+var h2=[], win2=0, tot2=0, slow2=null;
+var c2=$('c2'), g2=c2.getContext('2d');
+function Ecorr(a,b){ return Math.cos(2*(a-b)); }
+function sampleQ(a,b){
+  var c=Math.cos(a-b), cc=c*c/2, ss=(1-c*c)/2, r=rnd();
+  if(r<cc) return [0,0];
+  if(r<2*cc) return [1,1];
+  if(r<2*cc+ss) return [0,1];
+  return [1,0];
+}
+function Sval(){
+  return Ecorr(AN[0],AN[2])+Ecorr(AN[0],AN[3])+Ecorr(AN[1],AN[2])-Ecorr(AN[1],AN[3]);
+}
+function draw2(){
+  var g=g2, W=660, H=336;
+  g.fillStyle='#07080c'; g.fillRect(0,0,W,H);
+  var q1=slow2? slow2.x:null, q2=slow2? slow2.y:null;
+  var a1=(slow2&&slow2.phase>=2)? slow2.a:null, b1=(slow2&&slow2.phase>=2)? slow2.b:null;
+  booth(g,26,24,170,92,'앨리스',q1,a1,BLUE);
+  booth(g,W-196,24,170,92,'밥',q2,b1,GREEN);
+  source(g,W/2,68, slow2? Math.min(1,slow2.t):null, true);
+  /* 각도 눈금 */
+  function dial(cx,cy,ang,lab,on,kind){
+    g.save();
+    g.strokeStyle= on? 'rgba(185,140,240,.85)':'rgba(255,255,255,.16)'; g.lineWidth=1.4;
+    g.beginPath(); g.arc(cx,cy,17,0,7); g.stroke();
+    g.strokeStyle= on? VIO:'rgba(255,255,255,.45)'; g.lineWidth= on?2.6:1.8;
+    g.beginPath(); g.moveTo(cx-17*Math.cos(ang),cy+17*Math.sin(ang));
+    g.lineTo(cx+17*Math.cos(ang),cy-17*Math.sin(ang)); g.stroke();
+    g.fillStyle= on? 'rgba(185,140,240,.95)' : (kind? 'rgba(232,115,74,.8)':'rgba(111,178,240,.8)');
+    g.font='700 9.5px system-ui,sans-serif'; g.textAlign='center';
+    g.fillText(lab, cx, cy+30);
+    g.restore();
+  }
+    function deg(v){ var d2=v/D; var r2=Math.round(d2); return (Math.abs(d2-r2)<1e-6? r2.toFixed(0):d2.toFixed(1))+'°'; }
+  dial(72,166,AN[0],'파랑 → '+deg(AN[0]), slow2&&slow2.x===0, 0);
+  dial(162,166,AN[1],'빨강 → '+deg(AN[1]), slow2&&slow2.x===1, 1);
+  dial(W-162,166,AN[2],'파랑 → '+deg(AN[2]), slow2&&slow2.y===0, 0);
+  dial(W-72,166,AN[3],'빨강 → '+deg(AN[3]), slow2&&slow2.y===1, 1);
+  if(slow2 && slow2.phase>=3){
+    g.save(); g.textAlign='center'; g.font='800 14px system-ui,sans-serif';
+    g.fillStyle= slow2.win? GREEN:RED;
+    g.fillText(slow2.win? '이겼다':'졌다', W/2, 132); g.restore();
+  }
+  strip(g,26,232,W-52,18,h2);
+  bar(g,26,282,W-52,18, tot2? win2/tot2 : null, true);
+  out2();
+}
+function caseTable(){
+  var names=[['파랑','파랑'],['파랑','빨강'],['빨강','파랑'],['빨강','빨강']];
+  var h='<thead><tr><th>받은 카드 (앨리스 · 밥)</th><th>두 안경의 각도 차이</th>'+
+        '<th>해야 할 것</th><th>그렇게 될 확률</th></tr></thead><tbody>';
+  var tot=0;
+  for(var x=0;x<2;x++) for(var y=0;y<2;y++){
+    var a=x?AN[1]:AN[0], b=y?AN[3]:AN[2];
+    var diff=Math.abs(a-b)/D; diff=Math.abs(((diff+90)%180)-90);
+    var ps=Math.pow(Math.cos((a-b)),2);
+    var need=(x&y);
+    var pw= need? 1-ps : ps;
+    tot+=pw/4;
+    var nm=names[x*2+y];
+    h+='<tr><td><span style="color:'+(x?RED:BLUE)+'">'+nm[0]+'</span> · '+
+       '<span style="color:'+(y?RED:BLUE)+'">'+nm[1]+'</span></td>'+
+       '<td>'+diff.toFixed(1)+'°</td><td>'+(need?'다르게':'같게')+'</td>'+
+       '<td class="'+(pw>0.75?'g':'r')+'">'+(pw*100).toFixed(1)+'%</td></tr>';
+  }
+  h+='<tr><td>네 경우의 평균 = 승률</td><td>–</td><td>–</td>'+
+     '<td class="'+(tot>0.7501?'g':'r')+'">'+(tot*100).toFixed(2)+'%</td></tr>';
+  $('t2q').innerHTML=h+'</tbody>';
+}
+function out2(){
+  caseTable();
+  var S=Sval(), th=0.5+S/8;
+  $('wr2').textContent= tot2? (win2/tot2*100).toFixed(2)+'%' : '–';
+  $('wr2s').textContent= tot2? tot2.toLocaleString()+'판' : '돌려 보세요';
+  $('wr2').parentNode.className='num '+((tot2&&win2/tot2>0.7501)?'v2':'b');
+  $('sv').textContent=S.toFixed(4);
+  $('th2').textContent=(th*100).toFixed(2)+'%';
+  var f=$('f2');
+  if(S>2.0001){ f.className='flag vi';
+    f.innerHTML='<b>벨 점수가 '+S.toFixed(3)+'</b> — <b>2를 넘었습니다.</b> '+
+      '1번 판에서 본 것처럼, 미리 짜 온 어떤 표로도 이 숫자는 <b>2를 못 넘깁니다.</b> '+
+      (S>2.82? '그리고 지금은 <b>양자역학이 허락하는 최대치 2.828</b>에 닿아 있어요. 더는 못 올라갑니다.'
+             : '각도를 더 다듬으면 <b>2.828</b>까지 올릴 수 있습니다.'); }
+  else if(S>1.999){ f.className='flag warn';
+    f.innerHTML='벨 점수가 <b>딱 2</b>입니다 — 고전 한계와 같아요. 아직 <b>이상한 일은 없습니다.</b> '+
+      '각도를 벌려 보세요.'; }
+  else { f.className='flag';
+    f.innerHTML='벨 점수 <b>'+S.toFixed(3)+'</b>. 각도가 다 같으면 알갱이는 <b>늘 같은 답</b>을 내고, '+
+      '그건 <b>미리 답을 정해 온 것과 구별이 안 됩니다.</b> '+
+      '「가장 좋은 각도로」를 눌러 보세요.'; }
+}
+function syncAng(){
+  ['A0','A1','B0','B1'].forEach(function(id,i){
+    var dv=AN[i]/D, rv=Math.round(dv); $(id).value=dv;
+    $(id+'v').textContent=(Math.abs(dv-rv)<1e-6? rv.toFixed(0):dv.toFixed(1))+'°';
+  });
+}
+['A0','A1','B0','B1'].forEach(function(id,i){
+  $(id).oninput=function(){ AN[i]=(+this.value)*D; win2=0;tot2=0;h2=[]; syncAng(); draw2(); };
+});
+$('run2').onclick=function(){
+  slow2=null;
+  for(var i=0;i<10000;i++){
+    var x=rnd()<0.5?0:1, y=rnd()<0.5?0:1;
+    var o=sampleQ(x?AN[1]:AN[0], y?AN[3]:AN[2]);
+    var w=((o[0]^o[1])===(x&y));
+    tot2++; if(w) win2++; h2.push(w?1:0);
+  }
+  if(h2.length>200) h2=h2.slice(-200);
+  draw2();
+};
+$('opt2').onclick=function(){ AN=[0, 45*D, 22.5*D, -22.5*D]; win2=0;tot2=0;h2=[]; slow2=null;
+  syncAng(); draw2(); };
+$('rst2').onclick=function(){ AN=[0,0,0,0]; win2=0;tot2=0;h2=[]; slow2=null; syncAng(); draw2(); };
+$('slow2').onclick=function(){
+  if(slow2){ slow2=null; this.classList.remove('on'); draw2(); return; }
+  this.classList.add('on');
+  slow2={t:0,phase:0,x:rnd()<0.5?0:1,y:rnd()<0.5?0:1,a:0,b:0,win:false};
+};
+
+/* ================= 3번 판 : 모양 ================= */
+var c3=$('c3'), g3=c3.getContext('2d'), CURVE=null, SIG=null, TWO=null;
+function Elhv(th){ var t=Math.abs(th)%PI; if(t>PI/2) t=PI-t; return 1-4*t/PI; }
+function Psame(th){ return (1+Math.cos(2*th))/2; }          /* = cos²θ */
+function PsameL(th){ return (1+Elhv(th))/2; }
+function draw3(){
+  var g=g3, W=660, H=320;
+  g.fillStyle='#07080c'; g.fillRect(0,0,W,H);
+  var L=62, R=W-18, T=40, B=H-44;
+  function X(d){ return L+(R-L)*d/90; }
+  function Y(v){ return B-(B-T)*v; }
+  g.save();
+  g.fillStyle='rgba(132,139,153,.9)'; g.font='600 11px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('가로: 두 안경의 각도 차이 · 세로: 두 사람 답이 같게 나올 확률', 12, 20);
+  g.strokeStyle='rgba(255,255,255,.13)'; g.lineWidth=1;
+  g.beginPath(); g.moveTo(L,B); g.lineTo(R,B); g.stroke();
+  g.beginPath(); g.moveTo(L,B); g.lineTo(L,T); g.stroke();
+  g.font='600 10px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.85)'; g.textAlign='center';
+  [0,22.5,45,67.5,90].forEach(function(d){ g.fillText(d+'°', X(d), B+16); });
+  g.textAlign='right';
+  [0,0.25,0.5,0.75,1].forEach(function(v){ g.fillText((v*100).toFixed(0)+'%', L-6, Y(v)+4); });
+  g.strokeStyle='rgba(255,255,255,.05)';
+  [0.25,0.5,0.75].forEach(function(v){ g.beginPath(); g.moveTo(L,Y(v)); g.lineTo(R,Y(v)); g.stroke(); });
+  g.restore();
+  /* 숨은 쪽지 = 직선 */
+  g.save(); g.strokeStyle='rgba(232,115,74,.9)'; g.lineWidth=2.4; g.beginPath();
+  for(var d=0; d<=90; d+=1){ var x=X(d), y=Y(PsameL(d*D)); if(d===0)g.moveTo(x,y); else g.lineTo(x,y); }
+  g.stroke();
+  /* 양자 = 곡선 */
+  g.strokeStyle='rgba(185,140,240,.95)'; g.lineWidth=2.6; g.beginPath();
+  for(var d2=0; d2<=90; d2+=0.5){ var x2=X(d2), y2=Y(Psame(d2*D)); if(d2===0)g.moveTo(x2,y2); else g.lineTo(x2,y2); }
+  g.stroke();
+  /* 22.5° 두 값 */
+  var yq=Y(Psame(PI/8)), yl=Y(PsameL(PI/8)), xq=X(22.5);
+  g.strokeStyle='rgba(87,201,138,.6)'; g.lineWidth=1.6; g.setLineDash([4,4]);
+  g.beginPath(); g.moveTo(xq,yq); g.lineTo(xq,yl); g.stroke(); g.setLineDash([]);
+  g.fillStyle=VIO; g.beginPath(); g.arc(xq,yq,4.5,0,7); g.fill();
+  g.fillStyle=RED; g.beginPath(); g.arc(xq,yl,4.5,0,7); g.fill();
+  g.font='800 11.5px system-ui,sans-serif'; g.textAlign='left';
+  g.fillStyle=VIO; g.fillText('85.4%  ← 2번 판의 승률', xq+10, yq-4);
+  g.fillStyle=RED; g.fillText('75%  ← 1번 판의 천장', xq+10, yl+14);
+  g.font='700 11px system-ui,sans-serif'; g.textAlign='right';
+  g.fillStyle='rgba(185,140,240,.95)'; g.fillText('실제(양자) — 둥근 곡선', R, T-6);
+  g.fillStyle='rgba(232,115,74,.95)'; g.fillText('미리 답을 들고 떠났다면 — 곧은 직선', R, T+10);
+  g.restore();
+  if(CURVE){
+    g.save(); g.fillStyle='#eef1f6';
+    CURVE.d.forEach(function(d3,i3){ g.beginPath(); g.arc(X(d3),Y(CURVE.p[i3]),3.6,0,7); g.fill(); });
+    g.fillStyle='rgba(238,241,246,.9)'; g.font='700 11px system-ui,sans-serif'; g.textAlign='right';
+    g.fillText('● 실제로 뽑아 잰 값', R, T+26);
+    g.restore();
+  }
+  out3();
+}
+function out3(){
+  $('p1').textContent= TWO? (TWO.a*100).toFixed(1)+'%' : '–';
+  $('p2').textContent= TWO? (TWO.a*200).toFixed(1)+'%' : '–';
+  $('p3v').textContent= TWO? (TWO.b*100).toFixed(1)+'%' : '–';
+  $('p3v').parentNode.className='num '+((TWO&&TWO.b>2*TWO.a)?'c':'a');
+  var f=$('f3');
+  if(TWO){
+    var over=TWO.b>2*TWO.a;
+    f.className='flag '+(over?'vi':'warn');
+    f.innerHTML= over?
+      '<b>넘었습니다.</b> 22.5°에서 다를 확률이 <b>'+(TWO.a*100).toFixed(1)+'%</b>니까, '+
+      '두 걸음을 가도 <b>'+(TWO.a*200).toFixed(1)+'%</b>보다 더 달라질 수는 없어야 해요. '+
+      '그런데 45°에서 실제로 다를 확률은 <b>'+(TWO.b*100).toFixed(1)+'%</b>입니다.<br>'+
+      '<b>그러면 처음 가정이 틀린 겁니다.</b> 알갱이는 세 각도의 답을 <b>미리 들고 떠나지 않았어요.</b>'
+      : '두 걸음 규칙을 지킵니다 — 아직 이상한 일이 없어요.';
+    return;
+  }
+  if(CURVE){ f.className='flag vi';
+    f.innerHTML='점이 <b>보라색 곡선 위</b>에 앉습니다(어긋남 '+CURVE.rms.toFixed(4)+'). '+
+      '붉은 직선은 <b>미리 답을 들고 떠났다면</b> 나왔어야 할 모양이고요. '+
+      '둘은 <b>0°와 90°에서 만나</b>는데 그 사이가 벌어집니다. '+
+      '<b>22.5°에서 85.4% 대 75%</b> — 게임의 두 숫자가 여기 있습니다.'; return; }
+  f.className='flag';
+  f.innerHTML='<b>「재 보기」</b>로 점을 찍고, <b>「두 걸음 따져 보기」</b>로 '+
+    '<b>왜 직선을 넘을 수 없는지</b>를 숫자로 확인해 보세요.';
+}
+$('run3').onclick=function(){
+  $('p3').textContent='뽑는 중…';
+  setTimeout(function(){
+    var ds=[], ps=[], N=40000, se=0;
+    for(var d=0; d<=90; d+=7.5){
+      var th=d*D, same=0;
+      for(var k=0;k<N;k++){ var o=sampleQ(th,0); if(o[0]===o[1]) same++; }
+      var p=same/N; ds.push(d); ps.push(p);
+      var t=Psame(th); se+=(p-t)*(p-t);
+    }
+    CURVE={d:ds, p:ps, rms:Math.sqrt(se/ds.length)};
+    $('p3').textContent='각도마다 '+N.toLocaleString()+'판씩';
+    draw3();
+  },20);
+};
+$('two3').onclick=function(){
+  $('p3').textContent='재는 중…';
+  setTimeout(function(){
+    var N=400000, d1=0, d2=0;
+    for(var k2=0;k2<N;k2++){ var o=sampleQ(22.5*D,0); if(o[0]!==o[1]) d1++; }
+    for(var k3=0;k3<N;k3++){ var o2=sampleQ(45*D,0); if(o2[0]!==o2[1]) d2++; }
+    TWO={a:d1/N, b:d2/N};
+    $('p3').textContent='각 '+N.toLocaleString()+'판씩';
+    draw3();
+  },20);
+};
+$('sig3').onclick=function(){
+  $('p3').textContent='검사 중…';
+  setTimeout(function(){
+    var res=[], N=300000;
+    [0,22.5,45,90].forEach(function(bd){
+      var z=0;
+      for(var k=0;k<N;k++){ if(sampleQ(0, bd*D)[0]===0) z++; }
+      res.push(z/N);
+    });
+    var mn=Math.min.apply(null,res), mx=Math.max.apply(null,res);
+    SIG={min:mn, max:mx, dev:Math.max(Math.abs(mn-0.5),Math.abs(mx-0.5)), all:res};
+    $('p3').textContent='밥의 각도 4가지 × '+N.toLocaleString()+'판';
+    var fb=$('f3b'); fb.style.display=''; fb.className='flag ok';
+    fb.innerHTML='<b>신호는 보낼 수 없습니다.</b> 밥이 안경을 <b>0°·22.5°·45°·90°</b>로 돌려 가는 동안 '+
+      '앨리스 쪽만 따로 세어 보면 ○가 나올 확률이 '+
+      res.map(function(v){return '<b>'+v.toFixed(4)+'</b>';}).join(' · ')+' — '+
+      '<b>전부 반반</b>이에요. 표본 오차만큼만 흔들립니다. '+
+      '그러니 앨리스는 자기 결과만 아무리 들여다봐도 <b>밥이 무엇을 했는지 알 수 없습니다.</b> '+
+      '이상한 건 각자의 답이 아니라 <b>둘을 맞춰 봤을 때</b>뿐이에요.';
+    draw3();
+  },20);
+};
+
+/* ================= 4번 판 : 검산 ================= */
+$('ver').onclick=function(){
+  $('pv').textContent='돌리는 중…';
+  setTimeout(function(){
+    var rows=[];
+    /* 1) 고전 전수조사 */
+    var mx=0, cnt={};
+    for(var A=0;A<4;A++) for(var B=0;B<4;B++){
+      var p=exactC([A&1,(A>>1)&1],[B&1,(B>>1)&1]);
+      cnt[p]=(cnt[p]||0)+1; if(p>mx) mx=p;
+    }
+    rows.push(['고전 전략 16가지 전수조사', (mx*100).toFixed(4)+'%', '75%',
+      Math.abs(mx-0.75).toExponential(1), Math.abs(mx-0.75)<1e-15]);
+    /* 2) 최적 각도의 S */
+    var sv=Ecorr(0,PI/8)+Ecorr(0,-PI/8)+Ecorr(PI/4,PI/8)-Ecorr(PI/4,-PI/8);
+    rows.push(['최적 각도에서 벨 점수 S', sv.toFixed(9), (2*Math.SQRT2).toFixed(9),
+      Math.abs(sv-2*Math.SQRT2).toExponential(1), Math.abs(sv-2*Math.SQRT2)<1e-12]);
+    /* 3) 이론 승률 */
+    var pw=0.5+sv/8, cc=Math.pow(Math.cos(PI/8),2);
+    rows.push(['그때의 이론 승률', pw.toFixed(9), 'cos²(π/8) = '+cc.toFixed(9),
+      Math.abs(pw-cc).toExponential(1), Math.abs(pw-cc)<1e-12]);
+    /* 4) 표본추출 승률 */
+    var N=600000, w=0;
+    for(var i=0;i<N;i++){
+      var x=rnd()<0.5?0:1, y=rnd()<0.5?0:1;
+      var o=sampleQ(x?PI/4:0, y?-PI/8:PI/8);
+      if((o[0]^o[1])===(x&y)) w++;
+    }
+    var emp=w/N, sd=Math.sqrt(cc*(1-cc)/N);
+    rows.push([N.toLocaleString()+'판 실제 표본추출', (emp*100).toFixed(4)+'%', (cc*100).toFixed(4)+'%',
+      (Math.abs(emp-cc)/sd).toFixed(2)+'σ', Math.abs(emp-cc)<3*sd]);
+    /* 5) 숨은변수 모형의 S */
+    var sl=Elhv(0-PI/8)+Elhv(0+PI/8)+Elhv(PI/4-PI/8)-Elhv(PI/4+PI/8);
+    rows.push(['숨은 쪽지 모형의 벨 점수', sl.toFixed(9), '2.000000000',
+      Math.abs(sl-2).toExponential(1), Math.abs(sl-2)<1e-12]);
+    /* 5b) 두 걸음 규칙에 쓰이는 두 확률 */
+    var M1=250000, c1a=0, c2a=0;
+    for(var q1=0;q1<M1;q1++){ var oa=sampleQ(22.5*D,0); if(oa[0]!==oa[1]) c1a++; }
+    for(var q2=0;q2<M1;q2++){ var ob=sampleQ(45*D,0); if(ob[0]!==ob[1]) c2a++; }
+    var t1=Math.pow(Math.sin(PI/8),2), t2=0.5;
+    var e1=Math.abs(c1a/M1-t1), s1=Math.sqrt(t1*(1-t1)/M1);
+    var e2=Math.abs(c2a/M1-t2), s2=Math.sqrt(t2*(1-t2)/M1);
+    rows.push(['22.5° 벌렸을 때 답이 다를 확률', (c1a/M1*100).toFixed(3)+'%', (t1*100).toFixed(3)+'%',
+      (e1/s1).toFixed(2)+'σ', e1<3*s1]);
+    rows.push(['45° 벌렸을 때 답이 다를 확률', (c2a/M1*100).toFixed(3)+'%', (t2*100).toFixed(3)+'%',
+      (e2/s2).toFixed(2)+'σ', e2<3*s2]);
+    /* 6) 신호 불가 */
+    var M=200000, z0=0, z1=0;
+    for(var j=0;j<M;j++){ if(sampleQ(0,0)[0]===0) z0++; if(sampleQ(0,PI/2)[0]===0) z1++; }
+    var dd=Math.abs(z0/M-z1/M), sd2=Math.sqrt(0.25/M)*Math.SQRT2;
+    rows.push(['밥의 설정을 바꿔도 앨리스 확률', (z0/M).toFixed(5)+' / '+(z1/M).toFixed(5), '0.5 / 0.5',
+      (dd/sd2).toFixed(2)+'σ', dd<3*sd2]);
+    var h='<thead><tr><th>검사</th><th>계산 결과</th><th>이론값</th><th>차이</th><th>판정</th></tr></thead><tbody>';
+    var allok=true;
+    var twoStep=(c2a/M1) > 2*(c1a/M1);
+    rows.forEach(function(r){ if(!r[4]) allok=false;
+      h+='<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td>'+
+         '<td class="'+(r[4]?'g':'r')+'">'+(r[4]?'합격':'불합격')+'</td></tr>'; });
+    $('t4').innerHTML=h+'</tbody>';
+    var f=$('f4'); f.style.display=''; f.className='flag '+(allok?'ok':'bad');
+    f.innerHTML= allok?
+      '<b>여덟 가지 모두 합격입니다.</b> 앞의 셋은 <b>계산기 반올림 한계</b>까지 정확히 맞고, '+
+      '뒤의 셋은 <b>표본을 뽑아</b> 잰 것이라 흔들리지만 <b>통계적 오차 안</b>에 있습니다. '+
+      '특히 마지막 줄이 중요해요 — <b>밥이 무엇을 하든 앨리스가 보는 것은 변하지 않습니다.</b><br>'+
+      '그리고 <b>6·7번 줄을 나란히 보세요.</b> 22.5°에서 다를 확률이 <b>'+(c1a/M1*100).toFixed(1)+'%</b>인데 '+
+      '45°에서는 <b>'+(c2a/M1*100).toFixed(1)+'%</b>입니다. 두 배인 <b>'+(c1a/M1*200).toFixed(1)+'%</b>를 '+
+      (twoStep? '<b>넘었어요</b>':'넘지 않았어요')+' — 3번 판의 「두 걸음」이 여기 숫자로 있습니다.'
+      : '한 줄 이상이 어긋났습니다.';
+    $('pv').textContent='';
+  },20);
+};
+
+/* ================= 애니메이션 ================= */
+var last=0;
+function tick(ts){
+  requestAnimationFrame(tick);
+  var dt=last? Math.min(0.05,(ts-last)/1000):0; last=ts;
+  [[slow1,draw1,1],[slow2,draw2,2]].forEach(function(q){
+    var s=q[0]; if(!s) return;
+    s.t+=dt*1.1;
+    var np = s.t<0.35? 0 : (s.t<1? 1 : (s.t<1.5? 2 : (s.t<2.3? 3 : 4)));
+    if(np!==s.phase){
+      s.phase=np;
+      if(np===2){
+        if(q[2]===1){ s.a=SA[s.x]; s.b=SB[s.y]; }
+        else { var o=sampleQ(s.x?AN[1]:AN[0], s.y?AN[3]:AN[2]); s.a=o[0]; s.b=o[1]; }
+        s.win=((s.a^s.b)===(s.x&s.y));
+      }
+      if(np===3){
+        if(q[2]===1){ tot1++; if(s.win)win1++; h1.push(s.win?1:0); }
+        else { tot2++; if(s.win)win2++; h2.push(s.win?1:0); }
+      }
+      if(np===4){ s.t=0; s.phase=0; s.x=rnd()<0.5?0:1; s.y=rnd()<0.5?0:1; }
+    }
+    q[1]();
+  });
+}
+
+/* ================= 검산 글 ================= */
+$('method').innerHTML='<b>확인한 것 ① 천장은 세어 본 것입니다.</b> 「75%가 한계」는 제가 어디서 옮겨 적은 게 아니라 '+
+ '이 판이 <b>16가지를 하나도 빠짐없이 계산</b>해서 나온 값입니다. 놀라운 건 결과의 <b>모양</b>이에요 — '+
+ '승률이 <b>75%(8가지)와 25%(8가지) 딱 두 값</b>만 나옵니다. 그 사이는 <b>비어 있어요.</b> '+
+ '네 조합 중 셋을 맞추거나 하나를 맞추거나, 둘 중 하나입니다.<br>'+
+ '<b>「난수를 쓰면 되지 않나」</b>는 흔한 반론이라 따로 확인했습니다. 두 사람이 같은 난수표를 나눠 갖고 '+
+ '매 판 작전을 바꾸는 방식을 <b>10만 가지</b> 시도해도 <b>75%를 못 넘습니다.</b> '+
+ '당연한데, <b>여러 작전의 평균은 그중 최고보다 클 수 없기</b> 때문이에요.<br><br>'+
+ '<b>확인한 것 ② 양자 쪽은 정확한 식으로 맞춥니다.</b> 안경 각도를 a, b로 두었을 때 '+
+ '<b>두 답이 같게 나올 확률</b>은 <code>cos²(a−b)</code>입니다(3번 판의 보라색 곡선). 최적 각도(0°, 45° / 22.5°, −22.5°)를 넣으면 벨 점수가 '+
+ '<b>2.828427125</b> = <b>2√2</b>이고, 승률은 <b>cos²(π/8) = 0.853553391</b>이에요. '+
+ '둘 다 <b>반올림 한계까지</b> 맞습니다. 그리고 이 식을 믿지 않아도 되게, '+
+ '<b>60만 판을 실제로 표본추출</b>해서 같은 값이 나오는지 봅니다.<br><br>'+
+ '<b>확인한 것 ③ 통신은 정말로 안 됩니다.</b> 이게 가장 중요한 검사예요. '+
+ '얽힘으로 신호를 보낼 수 있다면 상대성이론이 무너지니까요. '+
+ '밥의 각도를 0°·22.5°·45°·90°로 바꿔 가며 앨리스 쪽만 따로 세어 보면 '+
+ '<b>0을 낼 확률이 전부 0.5</b>입니다. 표본 오차만큼만 흔들려요. '+
+ '식으로도 밥의 각도가 <b>완전히 소거됩니다</b> — <code>cos²(a−b)/2 + sin²(a−b)/2 = 1/2</code>. '+
+ '<b>이상한 건 각자의 답이 아니라, 둘을 맞춰 봤을 때뿐입니다.</b><br><br>'+
+ '<b>맞추지 않았는데 나온 것.</b> 3번 판의 <b>붉은 삼각형</b>은 「각 알갱이가 숨은 각도 하나를 들고 떠난다」는 '+
+ '가장 자연스러운 모형에서 나옵니다. 그런데 이 삼각형으로 벨 점수를 계산하면 <b>정확히 2.000000000</b>이에요 — '+
+ '1번 판에서 16가지를 세어 얻은 <b>고전 한계와 정확히 같은 값</b>입니다. '+
+ '전혀 다른 두 계산(<b>전수조사</b>와 <b>적분</b>)이 같은 자리에서 만나요. 저는 이걸 맞춘 적이 없습니다.<br><br>'+
+ '<b>정직하게 밝힐 것.</b><br>'+
+ '· <b>이건 실험이 아니라 계산입니다.</b> 이 판은 양자역학이 <b>예측하는</b> 확률분포에서 표본을 뽑을 뿐이에요. '+
+ '「자연이 정말 그렇더라」는 <b>실제 실험실</b>에서 확인된 것이고, 이 판이 보여 주는 건 '+
+ '<b>「그 예측이 고전 한계를 넘는다」</b>는 부분까지입니다.<br>'+
+ '· <b>붉은 직선은 증명이 아닙니다.</b> 그건 <b>하나의</b> 숨은변수 모형이에요. '+
+ '「어떤 숨은변수 모형으로도 2를 못 넘는다」는 <b>일반적인</b> 증명은 3번 판의 그림이 아니라 '+
+ '<b>1번 판의 전수조사</b> 쪽입니다.<br>'+
+ '· <b>실제 실험에는 구멍이 있었습니다.</b> 검출 효율이 낮으면 「운 좋게 검출된 것만 봤다」는 반론이 가능하고, '+
+ '두 검출기가 너무 가까우면 「신호가 오갔다」는 반론이 가능해요. 이 구멍들을 <b>동시에</b> 막는 데 '+
+ '수십 년이 걸렸습니다. 이 판은 <b>그런 구멍이 아예 없는 이상적인 상황</b>을 가정합니다.<br>'+
+ '· <b>해석은 말하지 않습니다.</b> 「그래서 실재가 무엇이냐」에는 여러 입장이 있고 '+
+ '<b>아직 합의가 없습니다.</b> 확실한 건 「미리 답을 들고 떠났다 + 서로 영향 없다」를 <b>둘 다</b> 유지할 수는 '+
+ '없다는 것뿐이에요.<br>'+
+ '· <b>연도와 노벨상 이야기</b>는 널리 알려진 것을 옮겼고 <b>제가 원자료로 확인하지 않았습니다.</b> '+
+ '이 판이 직접 확인한 것은 <b>계산뿐</b>입니다.';
+
+$('sources').innerHTML='게임: CHSH · 카드 파랑/빨강 균등 · 둘 다 빨강일 때만 답이 달라야 이김 · 승률 = 1/2 + S/8 · '+
+ '상태 (|00⟩+|11⟩)/√2 · 두 답이 같을 확률 cos²(a−b) · 고전 한계 S ≤ 2 · 양자 한계 S = 2√2 ≈ 2.828 · '+
+ '최적 각도 0°, 45° / 22.5°, −22.5° · 난수는 xorshift32 · 모든 수치는 이 페이지에서 직접 계산';
+
+/* 초기화 */
+syncBtns(); syncAng(); draw1(); draw2(); draw3(); requestAnimationFrame(tick);
+
+window.__bl={
+  exactC:exactC, Ecorr:Ecorr, Elhv:Elhv, Sval:Sval, sampleQ:sampleQ,
+  enumerate:function(){ var mx=0, cnt={};
+    for(var A=0;A<4;A++) for(var B=0;B<4;B++){
+      var p=exactC([A&1,(A>>1)&1],[B&1,(B>>1)&1]); cnt[p]=(cnt[p]||0)+1; if(p>mx)mx=p; }
+    return {max:mx, dist:cnt}; },
+  setStrat:function(a,b){ SA=a.slice(); SB=b.slice(); win1=0;tot1=0;h1=[]; syncBtns(); draw1();
+    return exactC(SA,SB); },
+  play1:function(n){ for(var i=0;i<n;i++){ var x=rnd()<0.5?0:1, y=rnd()<0.5?0:1, r=playC(x,y);
+    tot1++; if(r.win)win1++; } draw1(); return {n:tot1, rate:+(win1/tot1).toFixed(5)}; },
+  setAng:function(d){ AN=d.map(function(v){return v*D;}); win2=0;tot2=0;h2=[]; syncAng(); draw2();
+    return {S:+Sval().toFixed(9), theory:+(0.5+Sval()/8).toFixed(9)}; },
+  play2:function(n){ for(var i=0;i<n;i++){ var x=rnd()<0.5?0:1, y=rnd()<0.5?0:1;
+    var o=sampleQ(x?AN[1]:AN[0], y?AN[3]:AN[2]);
+    var w=((o[0]^o[1])===(x&y)); tot2++; if(w)win2++; } draw2();
+    return {n:tot2, rate:+(win2/tot2).toFixed(5)}; },
+  marginal:function(bdeg,N){ var z=0;
+    for(var k=0;k<N;k++) if(sampleQ(0,bdeg*D)[0]===0) z++;
+    return +(z/N).toFixed(6); },
+  curve:function(N){ var out=[];
+    for(var d=0; d<=90; d+=7.5){ var c=0;
+      for(var k=0;k<N;k++){ var o=sampleQ(d*D,0); if(o[0]===o[1]) c++; }
+      out.push([d, +(c/N).toFixed(4), +Psame(d*D).toFixed(4), +PsameL(d*D).toFixed(4)]); }
+    return out; },
+  lhvS:function(){ return +(Elhv(0-PI/8)+Elhv(0+PI/8)+Elhv(PI/4-PI/8)-Elhv(PI/4+PI/8)).toFixed(9); },
+  runVerify:function(){ $('ver').click(); }
+};
+</script>
+</body>
+</html>

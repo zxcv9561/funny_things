@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>목성이 그어 놓은 빈 줄</title>
+<style>
+  :root{ --bg:#0b0c10; --panel:#14161d; --panel2:#1b1e27; --ink:#eef1f6; --dim:#848b99;
+         --line:rgba(255,255,255,.11); --acc:#6fb2f0; --ok:#57c98a; --warn:#e0a52a; --bad:#e8734a; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 70px}
+  h1{font-size:23px;margin:0 0 7px;letter-spacing:-.01em}
+  .lede{color:var(--dim);font-size:13.5px;line-height:1.8;margin:0 0 16px;max-width:78ch}
+  .lede b{color:var(--ink)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:13px}
+  .card h2{font-size:14.5px;margin:0 0 3px;font-weight:600}
+  .card p.cap{font-size:12.5px;color:var(--dim);margin:0 0 12px;line-height:1.7}
+  .card p.cap b{color:var(--ink)}
+  .card p{font-size:13.5px;line-height:1.9;color:#c3c7d1;margin:0 0 10px}
+  .card p b{color:var(--ink)}
+  button,input{font:inherit}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:6px 11px;color:var(--dim);font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .btn:hover{color:var(--ink);border-color:var(--acc)}
+  .btn.on{border-color:var(--acc);color:var(--ink);font-weight:700;background:rgba(111,178,240,.13)}
+  .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .row .lab{font-size:12px;color:var(--dim)}
+  input[type=range]{accent-color:var(--acc);width:120px}
+  .two{display:grid;grid-template-columns:1fr 250px;gap:16px}
+  .two>div{min-width:0}
+  .num{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px}
+  .num .t{font-size:11px;color:var(--dim);margin-bottom:2px}
+  .num .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.25}
+  .num .s{font-size:11px;color:var(--dim);margin-top:2px}
+  .num.a .v{color:var(--acc)} .num.b .v{color:var(--ok)} .num.c .v{color:var(--bad)}
+  .flag{border-radius:10px;padding:11px 13px;margin-top:11px;font-size:13px;line-height:1.8;
+    background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--dim);color:#c3c7d1}
+  .flag.ok{border-left-color:var(--ok)} .flag.bad{border-left-color:var(--bad)}
+  .flag.warn{border-left-color:var(--warn)}
+  .flag b{color:var(--ink)}
+  .hint{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .hint b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;color:var(--dim);font-weight:500;padding:6px 5px;border-bottom:1px solid var(--line);font-size:11.5px}
+  th:first-child{text-align:left}
+  td{padding:7px 5px;border-bottom:1px solid rgba(255,255,255,.05);color:#c3c7d1;text-align:right}
+  td:first-child{text-align:left;color:var(--ink);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.g{color:var(--ok);font-weight:700} td.r{color:var(--bad);font-weight:700}
+  canvas{display:block;width:100%;height:auto;border-radius:11px;border:1px solid var(--line);
+    background:#07080c;touch-action:none}
+  #hist{cursor:crosshair}
+  .src{font-size:11.5px;color:var(--dim);line-height:1.8;margin-top:10px}
+  .src a{color:var(--acc)}
+  @media (max-width:820px){ .two{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>목성이 그어 놓은 빈 줄</h1>
+  <p class="lede">화성과 목성 사이에 소행성 <b>140만 개</b>가 돕니다. 아무렇게나 흩어져 있을 것 같지만,
+  태양에서의 거리별로 세어 보면 <b>몇 군데가 텅 비어 있습니다.</b><br>
+  아래는 NASA 제트추진연구소에서 받아 온 <b>진짜 소행성 목록</b>입니다.
+  빈 자리가 어디인지 먼저 보고, 그 자리를 <b>계산으로 맞혀</b> 보겠습니다.</p>
+
+  <div class="card">
+    <h2>1 · 소행성대를 거리별로 세어 보면</h2>
+    <p class="cap">가로축은 태양에서의 거리(AU), 세로축은 그 구간에 있는 소행성 수입니다.
+    막대를 <b>눌러</b> 보세요. 골짜기가 몇 개 보이나요?</p>
+    <div class="two">
+      <div>
+        <canvas id="hist" width="900" height="420"></canvas>
+        <div class="row">
+          <button class="btn on" data-v="belt">소행성대 (2.1~3.4 AU)</button>
+          <button class="btn" data-v="wide">목성까지 (2.1~5.4 AU · 로그)</button>
+          <button class="btn" data-v="mark">공명 위치 표시</button>
+        </div>
+      </div>
+      <div>
+        <div class="num a"><div class="t">그린 구간의 소행성</div><div class="v" id="tot">–</div>
+          <div class="s">JPL 소천체 데이터베이스</div></div>
+        <div class="num c"><div class="t">누른 구간</div><div class="v" id="sel" style="font-size:15px">–</div>
+          <div class="s" id="sels">막대를 눌러 보세요</div></div>
+        <div class="flag" id="ff1" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div class="hint">골짜기가 <b>2.50 · 2.82 · 2.96 · 3.28</b> 근처에 있습니다.
+    1866년 대니얼 커크우드가 알아챘어요 — 당시 알려진 소행성이 <b>100개도 안 됐는데</b> 말입니다.
+    이 빈 줄들을 <b>커크우드 간극</b>이라고 부릅니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · 그 자리를 계산으로 맞히기</h2>
+    <p class="cap">목성은 <b>11.86년</b>에 한 바퀴 돕니다. 소행성이 목성이 <b>1바퀴 도는 동안 3바퀴</b>를 돈다면,
+    둘은 <b>같은 자리에서 반복해서 만납니다.</b> 그 거리를 케플러 제3법칙으로 구해 보세요.</p>
+    <div class="two">
+      <div>
+        <canvas id="reso" width="900" height="345"></canvas>
+        <div class="row" id="rpick"></div>
+        <div class="row">
+          <span class="lab">직접 고르기 — 소행성</span>
+          <input type="range" id="pp" min="1" max="9" value="3">
+          <span class="lab" id="ppv">3바퀴</span>
+          <span class="lab">: 목성</span>
+          <input type="range" id="qq" min="1" max="4" value="1">
+          <span class="lab" id="qqv">1바퀴</span>
+        </div>
+      </div>
+      <div>
+        <div class="num a"><div class="t">계산한 거리</div><div class="v" id="ra">–</div>
+          <div class="s" id="ras"></div></div>
+        <div class="num b"><div class="t">그 자리를 좁게 재면</div><div class="v" id="rn">–</div>
+          <div class="s" id="rns">폭 0.015 AU 안의 소행성 수</div></div>
+        <div class="flag" id="ff2" style="margin-top:0"></div>
+      </div>
+    </div>
+    <table id="t2" style="margin-top:12px"></table>
+    <div class="hint">낮은 차수의 공명(3:1, 5:2, 2:1)일수록 간극이 <b>깊습니다.</b>
+    7:3은 4.6배로 얕고, 8:3 같은 더 높은 차수에서는 <b>아예 골짜기가 안 생깁니다.</b>
+    <b>모든 비율이 간극을 만드는 게 아니라</b>, 목성과 자주·강하게 마주치는 몇 개만 만드는 거예요.</div>
+  </div>
+
+  <div class="card">
+    <h2>3 · 비우는 공명, 모으는 공명</h2>
+    <p class="cap">같은 「공명」인데 정반대 일이 벌어지는 자리가 있습니다.
+    위 그래프를 <b>「목성까지」</b>로 바꿔 보세요.</p>
+    <div class="two">
+      <div>
+        <table id="t3"></table>
+      </div>
+      <div>
+        <div class="num c"><div class="t">2:1 자리 (3.28 AU)</div><div class="v">326개</div>
+          <div class="s">이웃의 <b>90분의 1</b> — 텅 빔</div></div>
+        <div class="num b"><div class="t">3:2 자리 (3.97 AU)</div><div class="v">4,718개</div>
+          <div class="s">이웃의 <b>42배</b> — 잔뜩 몰림</div></div>
+        <div class="flag ok" style="margin-top:0">
+          똑같이 목성과 공명하는데 <b>하나는 비고 하나는 찹니다.</b></div>
+      </div>
+    </div>
+    <div class="hint">3.4 AU를 넘으면 소행성이 <b>거의 없습니다</b> — 4.20 AU 구간에는 <b>44개</b>뿐이에요. (바깥쪽은 연속으로 세지 않고 <b>여섯 군데만 골라</b> 쟀습니다.)
+    그 사막 한가운데 <b>3.97 AU</b>에 4,718개가 몰려 있고(<b>힐다족</b>),
+    목성의 궤도 위 <b>5.20 AU</b>에도 5,264개가 있습니다(<b>트로이 소행성</b>).
+    목성이 대부분을 쓸어냈지만, <b>박자를 정확히 맞춘 것들만</b> 살아남았습니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>4 · 왜 하나는 비고 하나는 차나</h2>
+    <p>공명이란 <b>같은 밀침이 같은 자리에서 반복되는</b> 것입니다.
+    그네를 밀 때 아무 때나 밀면 소용없지만 <b>박자를 맞춰</b> 밀면 점점 크게 흔들리죠.
+    3:1 자리의 소행성은 목성에게 <b>매번 같은 방향으로</b> 밀립니다. 밀림이 쌓이면 궤도가 길쭉해지고,
+    결국 화성이나 지구 궤도까지 넘어와 <b>행성에 부딪히거나 튕겨 나갑니다.</b>
+    수백만 년이면 그 자리는 <b>비워집니다.</b></p>
+    <p>그런데 3:2와 1:1은 반대입니다. 이 자리의 소행성들은 목성이 다가올 때
+    <b>항상 목성에서 먼 쪽</b>에 있도록 궤도가 스스로 조율돼요. 가까워지려 하면 밀려나고,
+    멀어지려 하면 당겨집니다. 공명이 <b>보호막</b>이 되는 겁니다.
+    같은 원리가 <b>비우기도 하고 지키기도</b> 합니다.</p>
+    <p>덧붙이면, 커크우드 간극은 <b>지금 그 자리에 소행성이 없다</b>는 뜻이지
+    거기를 지나가는 소행성이 없다는 뜻은 아닙니다. 오히려 3:1 간극은
+    <b>지구로 오는 운석의 주요 공급로</b>예요 — 그 자리에서 튕겨 나온 조각들이
+    안쪽으로 던져지거든요. <b>비어 있는 이유가 곧 위험한 이유</b>입니다.</p>
+    <div class="hint" id="method"></div>
+    <div class="src" id="sources"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+var $=function(id){return document.getElementById(id);};
+/* JPL 소천체 데이터베이스(ssd-api.jpl.nasa.gov)에서 받아온 실제 개수 — 2026-08-25
+   각 값은 [구간 중심 a(AU), 폭 0.05 AU 안의 소행성 수] */
+var H=[[2.15,13735],[2.20,37116],[2.25,56560],[2.30,76282],[2.35,89351],[2.40,80663],
+[2.45,46660],[2.50,15713],[2.55,86887],[2.60,110233],[2.65,105639],[2.70,87178],
+[2.75,90478],[2.80,52409],[2.85,28650],[2.90,27162],[2.95,26631],[3.00,59815],
+[3.05,78997],[3.10,96326],[3.15,105398],[3.20,60925],[3.25,11588],[3.30,1072],
+[3.35,1933],[3.60,128],[3.85,113],[3.95,4718],[4.20,44],[4.70,17],[5.20,5264]];
+/* 폭 0.015 AU 로 다시 잰 정밀 측정 */
+var NARROW={ '3:1':{a:2.5020,lo:2.495,hi:2.510,n:906},
+             '5:2':{a:2.8254,lo:2.818,hi:2.833,n:2205},
+             '7:3':{a:2.9584,lo:2.951,hi:2.966,n:6324},
+             '2:1':{a:3.2786,lo:3.271,hi:3.286,n:326} };
+var CTRL=[{a:2.6075,n:32724},{a:3.1075,n:29310}];   /* 공명이 아닌 대조 구간, 같은 폭 */
+var AJ=5.2044, TJ=11.862;
+function resA(p,q){ return AJ*Math.pow(q/p, 2/3); }
+function ctrlNear(a){ var b=CTRL[0], d=1e9;
+  CTRL.forEach(function(c){ var dd=Math.abs(c.a-a); if(dd<d){d=dd;b=c;} }); return b; }
+function binAt(a){ var b=null,d=1e9; H.forEach(function(h){ var dd=Math.abs(h[0]-a);
+  if(dd<d){d=dd;b=h;} }); return b; }
+
+/* ================= 1번: 히스토그램 ================= */
+var HW=900, HH=420, hc=$('hist'), hx=hc.getContext('2d');
+var view='belt', showMark=false, selBin=null;
+var MARKS=[[3,1],[5,2],[7,3],[2,1],[3,2],[1,1]];
+var HGEO={};
+function drawHist(){
+  hx.fillStyle='#07080c'; hx.fillRect(0,0,HW,HH);
+  var wide=(view==='wide');
+  var A0=2.10, A1= wide? 5.42 : 3.42;
+  var data=H.filter(function(h){ return h[0]>=A0-0.03 && h[0]<=A1; });
+  var maxN=0; data.forEach(function(h){ maxN=Math.max(maxN,h[1]); });
+  var L=78,R=HW-22,T=76,B=HH-40;
+  function X(a){ return L+(a-A0)/(A1-A0)*(R-L); }
+  function Y(n){
+    if(wide){ var lg=Math.log10(Math.max(1,n)), lm=Math.log10(maxN);
+      return B-(lg/lm)*(B-T); }
+    return B-(n/maxN)*(B-T);
+  }
+  HGEO={A0:A0,A1:A1,X:X,Y:Y,L:L,R:R,T:T,B:B,wide:wide,data:data};
+  hx.save(); hx.strokeStyle='rgba(255,255,255,.08)'; hx.lineWidth=1;
+  hx.fillStyle='rgba(132,139,153,.9)'; hx.font='600 11px system-ui,sans-serif';
+  if(wide){
+    [1,10,100,1000,10000,100000].forEach(function(n){
+      if(n>maxN) return;
+      hx.beginPath(); hx.moveTo(L,Y(n)); hx.lineTo(R,Y(n)); hx.stroke();
+      hx.textAlign='right'; hx.fillText(n.toLocaleString(), L-8, Y(n)+4); });
+  } else {
+    [0,25000,50000,75000,100000].forEach(function(n){
+      hx.beginPath(); hx.moveTo(L,Y(n)); hx.lineTo(R,Y(n)); hx.stroke();
+      hx.textAlign='right'; hx.fillText((n/1000)+'천', L-8, Y(n)+4); });
+  }
+  hx.textAlign='center';
+  var step= wide? 0.5:0.2;
+  for(var a=2.2;a<=A1;a+=step) hx.fillText(a.toFixed(1), X(a), B+18);
+  hx.restore();
+  /* 막대 */
+  var bw=(X(A0+0.05)-X(A0))*0.88;
+  data.forEach(function(h){
+    var x=X(h[0]), y=Y(h[1]);
+    var isSel = selBin && selBin[0]===h[0];
+    var sampled = h[0]>3.37;               /* 3.4 AU 바깥은 몇 군데만 재 봤다 */
+    hx.save();
+    hx.fillStyle= isSel? 'rgba(224,165,42,.9)' : (h[1]<20000? 'rgba(232,115,74,.75)':'rgba(111,178,240,.8)');
+    if(sampled) hx.globalAlpha=0.9;
+    hx.fillRect(x-bw/2, y, bw, B-y);
+    if(sampled){
+      hx.globalAlpha=1; hx.strokeStyle='rgba(255,255,255,.55)'; hx.lineWidth=1.2;
+      hx.setLineDash([3,3]); hx.strokeRect(x-bw/2,y,bw,B-y); hx.setLineDash([]);
+      hx.fillStyle='rgba(238,241,246,.9)'; hx.font='700 10.5px system-ui,sans-serif';
+      hx.textAlign='center'; hx.fillText(h[1].toLocaleString(), x, y-6);
+    }
+    if(isSel){ hx.strokeStyle='#fff'; hx.lineWidth=2; hx.strokeRect(x-bw/2,y,bw,B-y); }
+    hx.restore();
+  });
+  if(wide){
+    hx.save(); hx.strokeStyle='rgba(255,255,255,.18)'; hx.lineWidth=1.4; hx.setLineDash([6,5]);
+    hx.beginPath(); hx.moveTo(X(3.38),T); hx.lineTo(X(3.38),B); hx.stroke(); hx.restore();
+
+  }
+  /* 공명 표시 */
+  if(showMark){
+    MARKS.forEach(function(m){
+      var a=resA(m[0],m[1]); if(a<A0||a>A1) return;
+      var pile=(m[0]===3&&m[1]===2)||(m[0]===1&&m[1]===1);
+      hx.save(); hx.strokeStyle= pile? 'rgba(87,201,138,.9)':'rgba(232,115,74,.9)';
+      hx.lineWidth=1.8; hx.setLineDash([5,4]);
+      hx.beginPath(); hx.moveTo(X(a),T-6); hx.lineTo(X(a),B); hx.stroke(); hx.restore();
+      hx.save(); hx.fillStyle= pile? '#57c98a':'#e8734a'; hx.font='800 12px system-ui,sans-serif';
+      hx.textAlign='center'; hx.shadowColor='rgba(0,0,0,.95)'; hx.shadowBlur=6;
+      hx.fillText(m[0]+':'+m[1], X(a), T-11); hx.restore();
+    });
+  }
+  hx.save(); hx.fillStyle='rgba(238,241,246,.92)'; hx.font='700 13.5px system-ui,sans-serif';
+  hx.textAlign='left';
+  hx.fillText('태양에서의 거리별 소행성 수'+(wide?' — 세로축 로그':''), 16, 26);
+  hx.fillStyle='rgba(132,139,153,.9)'; hx.font='600 11.5px system-ui,sans-serif';
+  hx.fillText('가로축 = 궤도 긴반지름 (AU) · 막대 하나 = 폭 0.05 AU'+
+    (showMark?' · 세로 점선 = 목성과의 공명 위치':''), 16, 42);
+  if(wide){ hx.fillStyle='rgba(224,165,42,.95)';
+    hx.fillText('3.4 AU 까지는 0.05 AU 간격으로 전부 셌고, 그 바깥은 여섯 군데만 골라 잰 표본입니다 (점선 테두리 막대)', 16, 60); }
+  hx.restore();
+  var tot=data.reduce(function(s,h){return s+h[1];},0);
+  $('tot').textContent=tot.toLocaleString()+'개';
+  var f=$('ff1');
+  if(wide){ f.className='flag warn';
+    f.innerHTML='3.4 AU 밖은 거의 <b>사막</b>입니다. 그런데 <b>3.95</b>와 <b>5.20</b>에 봉우리가 '+
+      '두 개 솟아 있어요. 3번 판에서 이 이야기를 합니다.'; }
+  else { f.className='flag';
+    f.innerHTML='골짜기가 보이시나요? <b>2.50</b>과 <b>3.30</b>이 특히 깊습니다. '+
+      '「공명 위치 표시」를 눌러 보세요.'; }
+}
+hc.addEventListener('pointerdown',function(e){
+  var r=hc.getBoundingClientRect();
+  var mx=(e.clientX-r.left)/r.width*HW;
+  var best=null, bd=1e9;
+  HGEO.data.forEach(function(h){ var d=Math.abs(HGEO.X(h[0])-mx); if(d<bd){bd=d;best=h;} });
+  if(best && bd<24){ selBin=best;
+    $('sel').textContent=best[1].toLocaleString()+'개';
+    $('sels').textContent=(best[0]-0.025).toFixed(3)+' ~ '+(best[0]+0.025).toFixed(3)+' AU';
+    drawHist(); }
+});
+$('hist').parentNode.querySelector('.row').addEventListener('click',function(e){
+  var b=e.target.closest('.btn'); if(!b) return;
+  if(b.dataset.v==='mark'){ showMark=!showMark; b.classList.toggle('on',showMark); drawHist(); return; }
+  [].forEach.call(this.querySelectorAll('.btn'),function(x){
+    if(x.dataset.v!=='mark') x.classList.remove('on'); });
+  b.classList.add('on'); view=b.dataset.v; selBin=null;
+  $('sel').textContent='–'; $('sels').textContent='막대를 눌러 보세요';
+  drawHist(); });
+
+/* ================= 2번: 공명 계산 ================= */
+var RW=900, RH=345, rc=$('reso'), rx=rc.getContext('2d');
+var P=3, Q=1;
+function drawReso(){
+  rx.fillStyle='#07080c'; rx.fillRect(0,0,RW,RH);
+  var a=resA(P,Q), per=TJ*Q/P;
+  var A0=2.10, A1=5.42, L=78,R=RW-22,T=132,B=RH-40;
+  function X(v){ return L+(v-A0)/(A1-A0)*(R-L); }
+  var maxN=0; H.forEach(function(h){ maxN=Math.max(maxN,h[1]); });
+  function Y(n){ var lg=Math.log10(Math.max(1,n)); return B-(lg/Math.log10(maxN))*(B-T); }
+  /* 작은 히스토그램 */
+  var bw=(X(A0+0.05)-X(A0))*0.88;
+  H.forEach(function(h){ if(h[0]<A0||h[0]>A1) return;
+    rx.fillStyle= h[1]<20000? 'rgba(232,115,74,.55)':'rgba(111,178,240,.55)';
+    rx.fillRect(X(h[0])-bw/2, Y(h[1]), bw, B-Y(h[1])); });
+  rx.save(); rx.strokeStyle='rgba(255,255,255,.15)'; rx.lineWidth=1;
+  rx.beginPath(); rx.moveTo(L,B); rx.lineTo(R,B); rx.stroke();
+  rx.fillStyle='rgba(132,139,153,.9)'; rx.font='600 11px system-ui,sans-serif'; rx.textAlign='center';
+  for(var v=2.5;v<=5.4;v+=0.5) rx.fillText(v.toFixed(1), X(v), B+18);
+  rx.restore();
+  /* 예측선 */
+  if(a>=A0 && a<=A1){
+    rx.save(); rx.strokeStyle='#e0a52a'; rx.lineWidth=2.6;
+    rx.beginPath(); rx.moveTo(X(a),T-26); rx.lineTo(X(a),B); rx.stroke();
+    rx.fillStyle='#e0a52a'; rx.beginPath();
+    rx.moveTo(X(a),T-26); rx.lineTo(X(a)-7,T-36); rx.lineTo(X(a)+7,T-36); rx.closePath(); rx.fill();
+    rx.font='800 13px system-ui,sans-serif'; rx.textAlign='center';
+    rx.shadowColor='rgba(0,0,0,.95)'; rx.shadowBlur=6;
+    rx.fillText(a.toFixed(3)+' AU', X(a), T-44); rx.restore();
+  }
+  rx.save(); rx.fillStyle='rgba(238,241,246,.94)'; rx.font='700 15px system-ui,sans-serif';
+  rx.textAlign='left';
+  rx.fillText('소행성 '+P+'바퀴 : 목성 '+Q+'바퀴', 16, 26);
+  rx.fillStyle='rgba(132,139,153,.95)'; rx.font='600 12px system-ui,sans-serif';
+  rx.fillText('주기 = 11.862년 × '+Q+'/'+P+' = '+per.toFixed(3)+'년', 16, 48);
+  rx.fillText('거리 = 5.2044 AU × ('+Q+'/'+P+')^(2/3) = '+a.toFixed(4)+' AU', 16, 68);
+  rx.restore();
+  out2(a,per);
+}
+function out2(a,per){
+  var key=P+':'+Q, nw=NARROW[key];
+  $('ra').textContent=a.toFixed(4)+' AU';
+  $('ras').textContent='주기 '+per.toFixed(3)+'년';
+  var f=$('ff2');
+  if(nw){
+    var c=ctrlNear(a), ratio=c.n/nw.n;
+    $('rn').textContent=nw.n.toLocaleString()+'개';
+    $('rns').textContent=nw.lo.toFixed(3)+'~'+nw.hi.toFixed(3)+' AU';
+    $('rn').parentNode.className='num c';
+    f.className='flag bad';
+    f.innerHTML='계산이 가리킨 자리를 <b>같은 폭</b>으로 재 보면 <b>'+nw.n.toLocaleString()+'개</b>. '+
+      '공명이 아닌 자리(<b>'+c.a.toFixed(3)+' AU</b>)는 같은 폭에 <b>'+c.n.toLocaleString()+'개</b>입니다 — '+
+      '<b>'+ratio.toFixed(1)+'배</b> 부족해요.';
+  } else if(a>3.42){
+    var b=binAt(a);
+    $('rn').textContent=b[1].toLocaleString()+'개';
+    $('rns').textContent='가장 가까운 구간 '+b[0].toFixed(2)+' AU (폭 0.05)';
+    $('rn').parentNode.className='num b';
+    f.className= b[1]>1000? 'flag ok':'flag';
+    f.innerHTML= b[1]>1000?
+      ('소행성대 <b>바깥</b>인데 <b>'+b[1].toLocaleString()+'개</b>나 있습니다. '+
+       '여기는 비는 게 아니라 <b>모이는</b> 공명이에요 — 3번 판을 보세요.') :
+      ('여기는 소행성대 바깥이라 원래 거의 비어 있습니다 (<b>'+b[1].toLocaleString()+'개</b>).');
+  } else {
+    var b2=binAt(a);
+    $('rn').textContent=b2[1].toLocaleString()+'개';
+    $('rns').textContent='가장 가까운 구간 '+b2[0].toFixed(2)+' AU (폭 0.05)';
+    $('rn').parentNode.className='num a';
+    f.className='flag';
+    f.innerHTML='이 비율은 <b>정밀 측정을 안 해 둔</b> 자리입니다. 가까운 0.05 AU 구간에 '+
+      '<b>'+b2[1].toLocaleString()+'개</b> — 위 그래프에서 이 자리에 골짜기가 있는지 직접 보세요. '+
+      '<b>모든 비율이 간극을 만들지는 않습니다.</b>';
+  }
+}
+$('rpick').innerHTML='<span class="lab">유명한 공명</span>'+
+  [[3,1],[5,2],[7,3],[2,1],[3,2],[1,1],[8,3]].map(function(m){
+    return '<button class="btn'+((m[0]===P&&m[1]===Q)?' on':'')+'" data-p="'+m[0]+'" data-q="'+m[1]+'">'+
+      m[0]+':'+m[1]+'</button>'; }).join('');
+$('rpick').onclick=function(e){ var b=e.target.closest('.btn'); if(!b) return;
+  [].forEach.call(this.querySelectorAll('.btn'),function(x){x.classList.remove('on');});
+  b.classList.add('on'); P=+b.dataset.p; Q=+b.dataset.q;
+  $('pp').value=P; $('qq').value=Q; lbl(); drawReso(); };
+function lbl(){ $('ppv').textContent=P+'바퀴'; $('qqv').textContent=Q+'바퀴'; }
+$('pp').oninput=function(){ P=+this.value; if(P<=Q) { P=Q; this.value=P; }
+  [].forEach.call($('rpick').querySelectorAll('.btn'),function(x){
+    x.classList.toggle('on', +x.dataset.p===P && +x.dataset.q===Q); });
+  lbl(); drawReso(); };
+$('qq').oninput=function(){ Q=+this.value; if(P<=Q){ Q=P; this.value=Q; }
+  [].forEach.call($('rpick').querySelectorAll('.btn'),function(x){
+    x.classList.toggle('on', +x.dataset.p===P && +x.dataset.q===Q); });
+  lbl(); drawReso(); };
+
+(function(){
+  var h='<thead><tr><th>공명</th><th>계산한 거리</th><th>그 자리 (폭 0.015)</th>'+
+    '<th>공명 아닌 자리</th><th>몇 배 부족한가</th></tr></thead><tbody>';
+  [['3:1',3,1],['5:2',5,2],['7:3',7,3],['2:1',2,1]].forEach(function(m){
+    var nw=NARROW[m[0]], a=resA(m[1],m[2]), c=ctrlNear(a), r=c.n/nw.n;
+    h+='<tr><td>'+m[0]+'</td><td>'+a.toFixed(4)+' AU</td>'+
+      '<td class="r">'+nw.n.toLocaleString()+'개</td><td>'+c.n.toLocaleString()+'개</td>'+
+      '<td class="r">'+r.toFixed(1)+'배</td></tr>';
+  });
+  $('t2').innerHTML=h+'</tbody>';
+})();
+(function(){
+  var h='<thead><tr><th>자리</th><th>거리</th><th>소행성 수 (폭 0.05)</th>'+
+    '<th>바로 이웃</th><th>결과</th></tr></thead><tbody>';
+  var rows=[['2:1 공명',3.30,1072,'3.15 구간',105398,'gap'],
+            ['사막',4.20,44,'4.70 구간',17,'none'],
+            ['3:2 공명 · 힐다족',3.95,4718,'3.85 구간',113,'pile'],
+            ['1:1 공명 · 트로이',5.20,5264,'4.70 구간',17,'pile']];
+  rows.forEach(function(r){
+    var rel= r[5]==='gap'? (r[4]/r[2]).toFixed(0)+'배 부족'
+           : r[5]==='pile'? (r[2]/r[4]).toFixed(0)+'배 몰림' : '–';
+    h+='<tr><td>'+r[0]+'</td><td>'+r[1].toFixed(2)+' AU</td>'+
+      '<td class="'+(r[5]==='pile'?'g':(r[5]==='gap'?'r':''))+'">'+r[2].toLocaleString()+'개</td>'+
+      '<td>'+r[4].toLocaleString()+'개</td>'+
+      '<td class="'+(r[5]==='pile'?'g':(r[5]==='gap'?'r':''))+'">'+rel+'</td></tr>';
+  });
+  $('t3').innerHTML=h+'</tbody>';
+})();
+
+$('method').innerHTML='<b>어떻게 만들었나.</b> NASA 제트추진연구소의 소천체 데이터베이스 API '+
+ '(ssd-api.jpl.nasa.gov)에 <b>거리 구간별로 몇 개인지</b>만 물어봤습니다. '+
+ '2.15~3.35 AU를 폭 0.05 AU로 <b>25번</b>, 바깥쪽을 <b>6번</b>, 그리고 공명 자리 네 곳과 '+
+ '대조 두 곳을 폭 0.015 AU로 <b>6번</b> — 모두 <b>37번의 질의</b>입니다. '+
+ '내려받은 날은 2026년 8월 25일이고 값은 그 시점의 카탈로그 기준이에요.<br><br>'+
+ '<b>검산.</b> 첫째, 공명 위치는 <b>케플러 제3법칙</b>으로 계산했습니다 — '+
+ 'a = 5.2044 × (q/p)^(2/3). 데이터를 보고 맞춘 게 아니라 <b>목성의 궤도 하나만으로</b> 나온 값이에요. '+
+ '계산값 <b>2.5020 · 2.8254 · 2.9584 · 3.2786</b>이 실측 골짜기와 전부 맞았습니다. '+
+ '둘째, 폭 0.05 AU로는 3:1 간극이 <b>3배</b> 정도로만 보였는데, '+
+ '간극이 구간보다 좁아서 생긴 착시였습니다. 폭을 <b>0.015 AU</b>로 좁혀 다시 재니 '+
+ '<b>36배</b>로 드러났어요. 2:1은 <b>90배</b>였고요. '+
+ '셋째, <b>대조군</b>을 뒀습니다 — 공명이 아닌 2.6075와 3.1075 AU를 <b>똑같은 폭</b>으로 재서 '+
+ '32,724개와 29,310개를 얻었습니다. 넷째, 8:3(2.706 AU)처럼 <b>차수가 높은 공명</b>에서는 '+
+ '골짜기가 안 생기는 것도 확인했습니다 — 「공명이면 무조건 빈다」가 아니라는 뜻이에요.<br><br>'+
+ '<b>정직하게 밝힐 것.</b> 이 개수는 <b>발견된</b> 소행성의 수입니다. 어둡고 작은 것은 '+
+ '아직 못 찾았고, 멀수록 더 어두우니 <b>바깥쪽이 실제보다 적게 세어졌을</b> 겁니다. '+
+ '다만 커크우드 간극은 <b>바로 옆 구간과의 비교</b>라 이 편향이 거의 상쇄됩니다 — '+
+ '2.50과 2.60은 밝기 조건이 거의 같으니까요. 3.4 AU 바깥과 안쪽을 직접 비교하는 것은 '+
+ '그만큼 조심해야 합니다. 그리고 3번 판의 「이웃」은 <b>제가 고른 한 구간</b>이라 '+
+ '배수는 어림값입니다 — 방향과 규모는 맞지만 소수점까지 믿을 숫자는 아닙니다.';
+
+$('sources').innerHTML='자료: <a href="https://ssd-api.jpl.nasa.gov/doc/sbdb_query.html" target="_blank" rel="noopener">'+
+ 'NASA JPL Small-Body Database Query API</a> · 목성 궤도 요소: a = 5.2044 AU, 공전주기 11.862년';
+
+lbl(); drawHist(); drawReso();
+
+window.__bt={
+  H:H, NARROW:NARROW, CTRL:CTRL, resA:resA, binAt:binAt, ctrlNear:ctrlNear,
+  setView:function(v){ view=v; drawHist(); },
+  setMark:function(m){ showMark=m; drawHist(); },
+  setPQ:function(p,q){ P=p; Q=q; $('pp').value=p; $('qq').value=q; lbl(); drawReso(); },
+  preds:function(){ return [[3,1],[5,2],[7,3],[2,1],[3,2],[1,1],[8,3]].map(function(m){
+    var a=resA(m[0],m[1]); return {r:m[0]+':'+m[1], a:+a.toFixed(4),
+      bin:binAt(a)[0], n:binAt(a)[1], narrow:(NARROW[m[0]+':'+m[1]]||{}).n||null}; }); },
+  ratios:function(){ var o={}; Object.keys(NARROW).forEach(function(k){
+    var nw=NARROW[k], c=ctrlNear(nw.a); o[k]=+(c.n/nw.n).toFixed(1); }); return o; },
+  total:function(){ return H.filter(function(h){return h[0]<=3.35;})
+    .reduce(function(s,h){return s+h[1];},0); }
+};
+</script>
+</body>
+</html>

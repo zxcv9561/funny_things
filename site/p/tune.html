@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>열두 번 쌓으면 제자리로 오지 않는다</title>
+<style>
+  :root{ --bg:#0b0c10; --panel:#14161d; --panel2:#1b1e27; --ink:#eef1f6; --dim:#848b99;
+         --line:rgba(255,255,255,.11); --acc:#6fb2f0; --ok:#57c98a; --warn:#e0a52a; --bad:#e8734a;
+         --vio:#b98cf0; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 70px}
+  h1{font-size:23px;margin:0 0 7px;letter-spacing:-.01em}
+  .lede{color:var(--dim);font-size:13.5px;line-height:1.8;margin:0 0 16px;max-width:78ch}
+  .lede b{color:var(--ink)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:13px}
+  .card h2{font-size:14.5px;margin:0 0 3px;font-weight:600}
+  .card p.cap{font-size:12.5px;color:var(--dim);margin:0 0 12px;line-height:1.7}
+  .card p.cap b{color:var(--ink)}
+  .card p{font-size:13.5px;line-height:1.9;color:#c3c7d1;margin:0 0 10px}
+  .card p b{color:var(--ink)}
+  button,input{font:inherit}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:6px 11px;color:var(--dim);font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .btn:hover{color:var(--ink);border-color:var(--acc)}
+  .btn.on{border-color:var(--acc);color:var(--ink);font-weight:700;background:rgba(111,178,240,.13)}
+  .btn.big{font-size:13.5px;padding:8px 14px;font-weight:700;color:var(--ink);border-color:var(--acc)}
+  .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .row .lab{font-size:12px;color:var(--dim)}
+  .two{display:grid;grid-template-columns:1fr 248px;gap:16px}
+  .two>div{min-width:0}
+  .num{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px}
+  .num .t{font-size:11px;color:var(--dim);margin-bottom:2px}
+  .num .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.25}
+  .num .s{font-size:11px;color:var(--dim);margin-top:2px}
+  .num.a .v{color:var(--acc)} .num.b .v{color:var(--ok)} .num.c .v{color:var(--bad)}
+  .flag{border-radius:10px;padding:11px 13px;margin-top:11px;font-size:13px;line-height:1.8;
+    background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--dim);color:#c3c7d1}
+  .flag.ok{border-left-color:var(--ok)} .flag.bad{border-left-color:var(--bad)}
+  .flag.warn{border-left-color:var(--warn)}
+  .flag b{color:var(--ink)}
+  .hint{font-size:12.5px;color:var(--dim);line-height:1.85;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .hint b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;color:var(--dim);font-weight:500;padding:6px 5px;border-bottom:1px solid var(--line);font-size:11.5px}
+  th:first-child{text-align:left}
+  td{padding:7px 5px;border-bottom:1px solid rgba(255,255,255,.05);color:#c3c7d1;text-align:right}
+  td:first-child{text-align:left;color:var(--ink);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.g{color:var(--ok);font-weight:700} td.r{color:var(--bad);font-weight:700}
+  canvas{display:block;width:100%;height:auto;border-radius:11px;border:1px solid var(--line);
+    background:#07080c;touch-action:manipulation}
+  canvas.click{cursor:pointer}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .src{font-size:11.5px;color:var(--dim);line-height:1.8;margin-top:10px}
+  code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px}
+  .snd{font-size:12px;color:var(--warn);margin-top:8px;line-height:1.7;display:none}
+  @media (max-width:820px){ .two{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>열두 번 쌓으면 제자리로 오지 않는다</h1>
+  <p class="lede">두 음이 가장 잘 어울리는 건 진동수가 <b>간단한 정수비</b>일 때입니다.
+  2:1이 옥타브, 3:2가 완전5도예요.<br>
+  그래서 5도를 계속 쌓아 올리면 언젠가는 <b>옥타브와 다시 만나야</b> 할 것 같습니다.
+  실제로 <b>열두 번</b> 쌓으면 <b>일곱 옥타브</b>와 거의 겹쳐요. 거의.<br>
+  이 <b>거의</b>가 음악 이천 년의 골칫거리입니다.
+  <b>소리를 켜고</b> 직접 들어 보세요 — 안 맞는 걸 <b>귀로</b> 알 수 있습니다.</p>
+
+  <div class="card">
+    <h2>1 · 5도를 열두 번 쌓아 보기</h2>
+    <p class="cap">완전5도(<b>3:2</b>)를 한 번씩 쌓아 올립니다. 나선이 한 바퀴 돌 때마다 한 옥타브예요.
+    열두 번 쌓으면 출발한 <b>도</b>로 돌아와야 하는데 — 돌아오는지 보세요.</p>
+    <div class="two">
+      <div>
+        <canvas id="sp" width="880" height="430"></canvas>
+        <div class="row">
+          <button class="btn big" id="up">5도 위로 ▲</button>
+          <button class="btn" id="all">한 번에 12번</button>
+          <button class="btn" id="rst">처음으로</button>
+          <span class="lab" id="stepv"></span>
+        </div>
+        <div class="row">
+          <span class="lab">들어보기</span>
+          <button class="btn" id="p0">출발 음</button>
+          <button class="btn" id="pn">지금 음</button>
+          <button class="btn" id="pb">둘 같이 (맥놀이!)</button>
+        </div>
+      </div>
+      <div>
+        <div class="num a"><div class="t">쌓은 횟수</div><div class="v" id="cnt">0</div>
+          <div class="s" id="cnts">아직 출발점</div></div>
+        <div class="num b"><div class="t">쌓아 올린 높이</div><div class="v" id="tot">0.00</div>
+          <div class="s" id="tots">센트 (1옥타브 = 1200)</div></div>
+        <div class="num c"><div class="t">옥타브와의 어긋남</div><div class="v" id="gap">–</div>
+          <div class="s" id="gaps"></div></div>
+        <div class="flag" id="f1" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div class="snd" id="snd1"></div>
+    <div class="hint">열두 번째에서 <b>23.46센트</b>가 남습니다. 이걸 <b>피타고라스 콤마</b>라고 불러요.
+    작아 보이지만 「둘 같이」를 누르면 <b>1초에 3.57번 울렁거리는 소리</b>가 들립니다
+    (가온 도 261.63Hz 와 접어 내린 도 265.19Hz).
+    악기 두 대가 이만큼 어긋나 있으면 아무도 못 견뎌요.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · 그래서 어떤 화음도 공짜가 아니다</h2>
+    <p class="cap">같은 <b>도-미-솔</b>을 네 가지 조율로 울려 봅니다.
+    두 음을 함께 울리면 <b>겹치는 배음</b>이 서로 조금씩 어긋나면서 소리 크기가 <b>출렁여요.</b>
+    이 출렁임(맥놀이)이 「탁하다」는 느낌의 정체입니다. 아래 세 줄이 <b>평평할수록 맑은 화음</b>이에요.</p>
+    <div class="two">
+      <div>
+        <canvas id="wv" width="880" height="406"></canvas>
+        <div class="row" id="tpick"></div>
+        <div class="row">
+          <button class="btn big" id="play2">▶ 세 음 함께</button>
+          <button class="btn" id="pp0">도+미</button>
+          <button class="btn" id="pp1">도+솔</button>
+          <button class="btn" id="pp2">미+솔</button>
+          <button class="btn" id="ab">순정률과 번갈아</button>
+          <span class="lab" id="p2info"></span>
+        </div>
+      </div>
+      <div>
+        <div class="num a"><div class="t">세 음의 진동수</div><div class="v" id="fr" style="font-size:15px">–</div>
+          <div class="s" id="frs"></div></div>
+        <div class="num c"><div class="t">1초에 출렁이는 횟수</div><div class="v" id="bt">–</div>
+          <div class="s" id="bts"></div></div>
+        <div class="num b"><div class="t">순정 음정과의 차이</div><div class="v" id="er" style="font-size:16px">–</div>
+          <div class="s">장3도 / 완전5도 (센트)</div></div>
+        <div class="flag" id="f2" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div class="hint">순정률은 세 줄이 <b>완전히 평평</b>합니다 — 출렁임이 0이에요. 배음이 정확히 겹치기 때문입니다.
+    그런데 순정률은 <b>딱 한 조에서만</b> 그렇습니다. 다른 조로 옮기는 순간 무너져요.
+    그래서 건반 악기는 순정률을 <b>쓸 수가 없습니다.</b></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · 오차를 어디에 몰아넣을 것인가</h2>
+    <p class="cap">콤마는 <b>없앨 수 없습니다.</b> 옮길 수만 있어요. 어느 칸이든 <b>눌러서 들어 보세요</b> —
+    같은 화음이 조와 조율에 따라 얼마나 달라지는지.
+    칸이 붉을수록 <b>탁한</b> 소리입니다 (모든 조를 같은 높이에서 비교).</p>
+    <div class="two">
+      <div>
+        <canvas id="hm" class="click" width="880" height="330"></canvas>
+        <div class="row"><span class="lab" id="hminfo">칸을 눌러 보세요</span></div>
+      </div>
+      <div>
+        <div class="num a"><div class="t">고른 칸</div><div class="v" id="hsel" style="font-size:15px">–</div>
+          <div class="s" id="hsels"></div></div>
+        <div class="num c"><div class="t">출렁임</div><div class="v" id="hbt">–</div>
+          <div class="s">회/초 · 낮을수록 맑음</div></div>
+        <div class="flag" id="f3" style="margin-top:0"></div>
+      </div>
+    </div>
+    <div class="scroll"><table id="t3" style="margin-top:12px;min-width:520px"></table></div>
+    <div class="hint"><b>중간음률</b>은 장3도를 완벽하게 만드는 대신 5도 하나에 오차를 전부 떠넘겼습니다 —
+    그 5도가 <b>늑대</b>예요. 대신 나머지 조는 눈부시게 맑습니다.<br>
+    <b>평균율</b>은 오차를 열두 5도에 <b>똑같이</b> 나눴습니다. 늑대는 사라졌지만
+    <b>모든 조가 똑같이 조금씩 탁해요.</b> 조마다 있던 <b>고유한 색</b>도 같이 사라졌습니다.<br>
+    참고로 바흐의 <b>「평균율 클라비어 곡집」</b>은 오역입니다. 원제 <code>Wohltemperirte</code>는
+    「<b>잘 조율된</b>」이지 「평균율」이 아니에요. 바흐가 어떤 조율을 염두에 뒀는지는 <b>아직도 논쟁 중</b>입니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>4 · 왜 하필 열둘인가</h2>
+    <p>콤마가 생기는 이유는 음악이 아니라 <b>산수</b>입니다.
+    5도를 <i>b</i>번 쌓아 옥타브 <i>a</i>개와 정확히 맞으려면 <code>3^b = 2^(a+b)</code> 여야 해요.
+    그런데 <b>소인수분해는 하나뿐</b>이라 왼쪽엔 3만, 오른쪽엔 2만 있습니다.
+    <b>영원히 같아질 수 없어요.</b> 콤마는 우연한 오차가 아니라 <b>피할 수 없는 결과</b>입니다.</p>
+    <p>그렇다면 <b>가장 덜 어긋나는 지점</b>을 고르는 수밖에 없습니다.
+    그건 <code>log₂(3/2) = 0.5849625…</code>를 <b>분수로 가장 잘 근사</b>하는 문제예요.
+    연분수를 전개하면 근사분수가 차례로 나옵니다 — <b>1/2, 3/5, 7/12, 24/41, 31/53…</b><br>
+    <b>7/12</b>가 나오는 순간 오차가 <b>2센트 아래</b>로 떨어집니다. 열둘은 <b>그렇게 정해졌어요.</b></p>
+    <div class="scroll"><table id="t4" style="min-width:480px"></table></div>
+    <p style="margin-top:12px">다음으로 좋은 건 <b>53</b>입니다. 53등분하면 5도 오차가 <b>0.07센트</b> —
+    사람 귀로는 순정과 구별이 안 갑니다. 실제로 53평균율 악기를 만든 사람들이 있었어요.
+    다만 <b>한 옥타브에 건반이 53개</b> 필요합니다. 열둘은 정확도와 손가락 사이의 타협입니다.</p>
+    <div class="hint" id="method"></div>
+    <div class="src" id="sources"></div>
+  </div>
+</div>
+<script>
+"use strict";
+var $=function(id){return document.getElementById(id);};
+function cents(r){ return 1200*Math.log2(r); }
+var J3=cents(1.25), J5=cents(1.5), PC=cents(Math.pow(1.5,12)/128), SC=cents(81/80);
+var NM=['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];
+var KO=['도','도#','레','미♭','미','파','파#','솔','솔#','라','시♭','시'];
+var F0=261.6255653;              /* 가온 도 */
+
+/* ============ 소리 ============ */
+var AC=null, master=null, wave=null, audioOK=true;
+function initAudio(){
+  if(AC) return AC;
+  try{
+    var C=window.AudioContext||window.webkitAudioContext;
+    if(!C){ audioOK=false; return null; }
+    AC=new C(); master=AC.createGain(); master.gain.value=0.13; master.connect(AC.destination);
+    var N=9, re=new Float32Array(N), im=new Float32Array(N);
+    for(var h=1;h<N;h++){ im[h]=1/Math.pow(h,1.15); }
+    wave=AC.createPeriodicWave(re,im,{disableNormalization:false});
+  }catch(e){ audioOK=false; AC=null; }
+  if(!audioOK) $('snd1').style.display='block';
+  return AC;
+}
+var live=[];
+function stopAll(){ live.forEach(function(o){ try{o.stop();}catch(e){} }); live=[]; }
+function play(freqs, dur, t0){
+  var ac=initAudio(); if(!ac) return;
+  if(ac.state==='suspended') ac.resume();
+  var t=ac.currentTime+(t0||0);
+  freqs.forEach(function(f){
+    var o=ac.createOscillator(); o.setPeriodicWave(wave); o.frequency.value=f;
+    var g=ac.createGain();
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(1/Math.sqrt(freqs.length),t+0.012);
+    g.gain.setValueAtTime(1/Math.sqrt(freqs.length),t+dur-0.25);
+    g.gain.linearRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
+    live.push(o);
+  });
+}
+$('snd1').innerHTML='이 브라우저에서 소리를 만들 수 없습니다. 그래도 <b>화면의 출렁임 그래프</b>가 '+
+  '들리는 것과 똑같은 내용을 보여 줍니다 — 곡선이 출렁이는 횟수가 곧 맥놀이 횟수예요.';
+
+/* 파형/포락선: 배음 8개(1/h^1.15)를 더한 실제 신호 */
+var SR=11025, HN=8, HA=[];
+for(var _h=1;_h<=HN;_h++) HA.push(1/Math.pow(_h,1.15));
+function signal(freqs,t){ var s=0;
+  for(var i=0;i<freqs.length;i++) for(var h=1;h<=HN;h++) s+=HA[h-1]*Math.sin(2*Math.PI*freqs[i]*h*t);
+  return s/freqs.length; }
+function samples(freqs,dur){
+  var n=Math.round(dur*SR), a=new Float64Array(n);
+  for(var i=0;i<freqs.length;i++) for(var h=1;h<=HN;h++){
+    var w=2*Math.PI*freqs[i]*h/SR, amp=HA[h-1];
+    for(var k=0;k<n;k++) a[k]+=amp*Math.sin(w*k); }
+  return a;
+}
+/* 짧은 구간 실효값(RMS) = 소리 크기의 흐름. 창(25ms)이 반송파를 지우고 맥놀이만 남긴다 */
+function rmsEnv(freqs,dur,n){
+  var WIN=0.025, a=samples(freqs,dur+WIN), W=Math.round(WIN*SR);
+  var ps=new Float64Array(a.length+1);
+  for(var i=0;i<a.length;i++) ps[i+1]=ps[i]+a[i]*a[i];
+  var out=new Float64Array(n), span=a.length-W;
+  for(var j=0;j<n;j++){ var c=Math.round(j*span/(n-1));
+    out[j]=Math.sqrt((ps[c+W]-ps[c])/W); }
+  return out;
+}
+/* 부딪히는 배음 한 쌍(순수 사인 두 개)만의 신호 */
+function pureSamples(f1,f2,n){
+  var a=new Float64Array(n), w1=2*Math.PI*f1/SR, w2=2*Math.PI*f2/SR;
+  for(var k=0;k<n;k++) a[k]=Math.sin(w1*k)+Math.sin(w2*k);
+  return a;
+}
+/* 포락선: 반송파 진동수로 직교 복조한 뒤 한 창(28ms·한 창 가중)으로 걸러 낸다.
+   RMS 로 하면 반송파 찌꺼기가 남아 가짜 봉우리가 생긴다 — 실제로 겪고 바꾼 부분. */
+var HANN={};
+function hann(W){ if(HANN[W]) return HANN[W];
+  var h=new Float64Array(W), s=0;
+  for(var k=0;k<W;k++){ h[k]=0.5-0.5*Math.cos(2*Math.PI*k/(W-1)); s+=h[k]; }
+  HANN[W]={h:h,s:s}; return HANN[W];
+}
+function pureEnv(f1,f2,dur,n){
+  var fc=(f1+f2)/2, W=Math.max(16,Math.round(0.028*SR));
+  var N=Math.round(dur*SR)+W, a=pureSamples(f1,f2,N);
+  var H=hann(W), h=H.h, hs=H.s, w=2*Math.PI*fc/SR, out=new Float64Array(n), k;
+  for(var j=0;j<n;j++){
+    var c=Math.round(j*(N-W)/(n-1)), I=0, Q=0;
+    for(k=0;k<W;k++){ var v=h[k]*a[c+k], p=w*(c+k); I+=v*Math.cos(p); Q+=v*Math.sin(p); }
+    I/=hs; Q/=hs; out[j]=2*Math.sqrt(I*I+Q*Q);
+  }
+  return out;
+}
+/* 포락선의 봉우리를 찾아 개수와 실제 출렁임 속도를 되짚는다 */
+function peakInfo(env,dur){
+  var mx=-1e9,mn=1e9,i;
+  for(i=0;i<env.length;i++){ if(env[i]>mx)mx=env[i]; if(env[i]<mn)mn=env[i]; }
+  if(mx<=0 || (mx-mn)<0.04*mx) return {n:0, rate:0};
+  var th=mn+(mx-mn)*0.5, pk=[];
+  for(i=1;i<env.length-1;i++){
+    if(env[i]>th && env[i]>env[i-1] && env[i]>=env[i+1]){
+      var a=env[i-1], b=env[i], c=env[i+1], d=(a-c)/(2*(a-2*b+c));  /* 포물선 보간 */
+      if(!isFinite(d)||Math.abs(d)>1) d=0;
+      pk.push((i+d)*dur/(env.length-1));
+    }
+  }
+  if(pk.length<2) return {n:pk.length, rate:0};
+  return {n:pk.length, rate:(pk.length-1)/(pk[pk.length-1]-pk[0])};
+}
+/* ============ 1번: 5도 쌓기 ============ */
+var STEP=0;
+var SW=880, SH=430, sc=$('sp'), sx=sc.getContext('2d');
+function totCents(n){ return n*J5; }
+function drawSp(){
+  var g=sx; g.fillStyle='#07080c'; g.fillRect(0,0,SW,SH);
+  var cx=SW*0.33, cy=SH/2+10, r0=26, r1=Math.min(SH/2-54, 158);
+  var OCT=7;
+  /* 나선 */
+  g.save();
+  g.strokeStyle='rgba(255,255,255,.10)'; g.lineWidth=1;
+  g.beginPath();
+  for(var t=0;t<=OCT*1200+30;t+=4){
+    var rr=r0+(r1-r0)*(t/(OCT*1200)), th=-Math.PI/2+2*Math.PI*(t/1200);
+    var x=cx+rr*Math.cos(th), y=cy+rr*Math.sin(th);
+    if(t===0)g.moveTo(x,y); else g.lineTo(x,y);
+  }
+  g.stroke(); g.restore();
+  /* 지나온 부분 */
+  g.save();
+  g.strokeStyle='#e0a52a'; g.lineWidth=2.6; g.shadowColor='rgba(224,165,42,.5)'; g.shadowBlur=7;
+  g.beginPath();
+  var TC=totCents(STEP);
+  for(t=0;t<=TC;t+=3){
+    var rr2=r0+(r1-r0)*(t/(OCT*1200)), th2=-Math.PI/2+2*Math.PI*(t/1200);
+    var x2=cx+rr2*Math.cos(th2), y2=cy+rr2*Math.sin(th2);
+    if(t===0)g.moveTo(x2,y2); else g.lineTo(x2,y2);
+  }
+  if(TC>0) g.stroke();
+  g.restore();
+  /* 점 */
+  function pos(t){ var rr=r0+(r1-r0)*(t/(OCT*1200)), th=-Math.PI/2+2*Math.PI*(t/1200);
+    return [cx+rr*Math.cos(th), cy+rr*Math.sin(th)]; }
+  for(var i=0;i<=STEP;i++){
+    var p=pos(totCents(i));
+    g.save();
+    g.fillStyle= i===0? '#6fb2f0' : (i===12? '#e8734a':'#e0a52a');
+    g.beginPath(); g.arc(p[0],p[1], i===0||i===12? 5.5:3.6, 0,7); g.fill();
+    var th0=-Math.PI/2+2*Math.PI*(totCents(i)/1200), off=(i===0||i===12)?15:11;
+    g.font=(i===0||i===12?'800 ':'700 ')+'11px system-ui,sans-serif'; g.textAlign='center';
+    g.fillStyle= i===0? '#6fb2f0':(i===12?'#e8734a':'rgba(200,208,222,.8)');
+    var lx=p[0]+Math.cos(th0)*off, ly=p[1]+Math.sin(th0)*off+4;
+    g.fillText(NM[(i*7)%12], lx, ly);
+    g.restore();
+  }
+  /* 출발 방향선 */
+  g.save(); g.strokeStyle='rgba(111,178,240,.35)'; g.lineWidth=1.2; g.setLineDash([4,4]);
+  g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx,cy-r1-14); g.stroke(); g.setLineDash([]);
+  g.fillStyle='rgba(111,178,240,.8)'; g.font='600 10.5px system-ui,sans-serif'; g.textAlign='center';
+  g.fillText('출발한 도의 방향', cx, cy-r1-20); g.restore();
+  /* 오른쪽: 확대 */
+  var bx=SW*0.63, by=40, bw=SW-bx-24, bh=SH-80;
+  g.save();
+  g.fillStyle='rgba(255,255,255,.03)'; g.fillRect(bx,by,bw,bh);
+  g.strokeStyle='var(--line)'; g.strokeStyle='rgba(255,255,255,.10)'; g.strokeRect(bx,by,bw,bh);
+  g.fillStyle='rgba(132,139,153,.95)'; g.font='600 11.5px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('마지막 옥타브를 펼쳐 본 것 (0~1200센트)', bx+12, by-10);
+  /* 눈금 */
+  var gy=by+bh*0.52, gx0=bx+22, gx1=bx+bw-22;
+  g.strokeStyle='rgba(255,255,255,.22)'; g.lineWidth=1.4;
+  g.beginPath(); g.moveTo(gx0,gy); g.lineTo(gx1,gy); g.stroke();
+  /* 0..40 센트 구간을 크게 */
+  var SPAN=40;
+  function X(cc){ return gx0+(gx1-gx0)*cc/SPAN; }
+  [0,10,20,30,40].forEach(function(v){
+    g.strokeStyle='rgba(255,255,255,.16)';
+    g.beginPath(); g.moveTo(X(v),gy-5); g.lineTo(X(v),gy+5); g.stroke();
+    g.fillStyle='rgba(132,139,153,.85)'; g.font='600 10.5px system-ui,sans-serif'; g.textAlign='center';
+    g.fillText(v+'센트', X(v), gy+20);
+  });
+  /* 출발 C */
+  g.fillStyle='#6fb2f0'; g.beginPath(); g.arc(X(0),gy,6,0,7); g.fill();
+  g.font='700 12px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('출발한 도', X(0)-6, gy+40);
+  g.font='600 10.5px system-ui,sans-serif'; g.fillStyle='rgba(111,178,240,.75)';
+  g.fillText('7옥타브 = 8400센트', X(0)-6, gy+56);
+  if(STEP===12){
+    var off=totCents(12)-8400;
+    g.fillStyle='#e8734a'; g.beginPath(); g.arc(X(off),gy,6,0,7); g.fill();
+    g.font='700 12px system-ui,sans-serif'; g.fillStyle='#e8734a'; g.textAlign='center';
+    g.fillText('도착한 도', X(off), gy+82);
+    g.font='800 11px system-ui,sans-serif';
+    g.fillText(off.toFixed(2)+'센트 높다', X(off), gy+98);
+    g.strokeStyle='rgba(232,115,74,.5)'; g.lineWidth=1; g.setLineDash([2,3]);
+    g.beginPath(); g.moveTo(X(off),gy+8); g.lineTo(X(off),gy+70); g.stroke(); g.setLineDash([]);
+    /* 간격 강조 */
+    g.strokeStyle='#e8734a'; g.lineWidth=2.4;
+    g.beginPath(); g.moveTo(X(0),gy-34); g.lineTo(X(off),gy-34); g.stroke();
+    g.beginPath(); g.moveTo(X(0),gy-38); g.lineTo(X(0),gy-30);
+    g.moveTo(X(off),gy-38); g.lineTo(X(off),gy-30); g.stroke();
+    g.font='800 13px system-ui,sans-serif'; g.textAlign='left';
+    g.fillText('피타고라스 콤마', X(off)+10, gy-30);
+    g.font='600 11px system-ui,sans-serif'; g.fillStyle='rgba(232,115,74,.85)';
+    g.fillText('531441 / 524288', X(off)+10, gy-15);
+  } else {
+    g.fillStyle='rgba(132,139,153,.7)'; g.font='600 11.5px system-ui,sans-serif'; g.textAlign='center';
+    g.fillText('열두 번 쌓으면 여기 무엇이 나타납니다', (gx0+gx1)/2, gy-50);
+  }
+  g.restore();
+  out1();
+}
+function out1(){
+  $('cnt').textContent=STEP;
+  $('cnts').textContent= STEP===0?'아직 출발점': (STEP<12? (12-STEP)+'번 남음':'열두 번 완료');
+  $('tot').textContent=totCents(STEP).toFixed(2);
+  $('tots').textContent='센트 · 옥타브로는 '+(totCents(STEP)/1200).toFixed(4)+'개';
+  var near=Math.round(totCents(STEP)/1200), gap=totCents(STEP)-near*1200;
+  $('gap').textContent= STEP===0? '0.00' : (gap>=0?'+':'')+gap.toFixed(2);
+  $('gaps').textContent= '센트 · 가장 가까운 '+near+'옥타브 대비';
+  $('stepv').textContent= STEP+' / 12 번';
+  $('cnts').textContent+= STEP>0? ' · 접어 들려주는 음 '+foldedF(STEP).toFixed(1)+'Hz':'';
+  var f=$('f1');
+  if(STEP<12){ f.className='flag';
+    f.innerHTML= STEP===0? '완전5도는 진동수를 <b>1.5배</b>로 올립니다. 「5도 위로」를 눌러 쌓아 보세요.'
+      : '지금 '+STEP+'번 쌓아 <b>'+totCents(STEP).toFixed(1)+'센트</b>. 가장 가까운 옥타브에서 <b>'+
+        Math.abs(gap).toFixed(1)+'센트</b> 벗어나 있습니다.'; }
+  else { f.className='flag bad';
+    f.innerHTML='<b>제자리로 오지 않았습니다.</b> 7옥타브는 8400센트인데 쌓아 올린 건 <b>'+
+      totCents(12).toFixed(2)+'</b> — <b>'+PC.toFixed(2)+'센트</b>가 남습니다. '+
+      '두 음을 같은 옥타브에 놓고 겹치면 <b>1초에 '+beatOf(12).toFixed(2)+'번</b> 울렁여요. '+
+      '「둘 같이」를 눌러 <b>귀로</b> 확인해 보세요.'; }
+}
+/* 쌓은 음을 늘 같은 옥타브 안으로 접어서 들려준다 (안 접으면 12번째가 33kHz라 안 들림) */
+function fold(c){ var v=c%1200; if(v<0)v+=1200; return v; }
+function foldedF(n){ return F0*Math.pow(2,fold(totCents(n))/1200); }
+function beatOf(n){ var f=foldedF(n); return Math.abs(f-F0); }
+$('up').onclick=function(){ if(STEP<12){ STEP++; drawSp(); play([foldedF(STEP)],0.55); } };
+$('all').onclick=function(){ STEP=0; drawSp();
+  var i=0; var iv=setInterval(function(){ i++; STEP=i; drawSp();
+    play([foldedF(i)],0.34);
+    if(i>=12) clearInterval(iv); }, 270); };
+$('rst').onclick=function(){ STEP=0; drawSp(); };
+$('p0').onclick=function(){ stopAll(); play([F0],1.6); };
+$('pn').onclick=function(){ stopAll(); play([foldedF(STEP)],1.6); };
+$('pb').onclick=function(){ stopAll(); play([F0, foldedF(STEP)],3.0); };
+
+/* ============ 2번: 화음 비교 ============ */
+var TUN2=[
+ {k:'순정률',   r:[1,5/4,3/2],                        note:'4 : 5 : 6 — 정수비 그 자체'},
+ {k:'평균율',   r:[1,Math.pow(2,4/12),Math.pow(2,7/12)], note:'오늘날 피아노'},
+ {k:'피타고라스', r:[1,81/64,3/2],                      note:'5도만 쌓아 만든 3도'},
+ {k:'중간음률',  r:[1,5/4,Math.pow(5,0.25)],            note:'3도를 살리고 5도를 깎음'}
+];
+var cur2=0;
+var WW=880, WH=406, wc=$('wv'), wx=wc.getContext('2d');
+function freqs2(i){ return TUN2[i].r.map(function(x){ return F0*x; }); }
+var PAIRS=[[0,1,'도 + 미','장3도',5,4],[0,2,'도 + 솔','완전5도',3,2],[1,2,'미 + 솔','단3도',6,5]];
+function beat2(i){
+  var f=freqs2(i);
+  return { third:Math.abs(5*f[0]-4*f[1]), fifth:Math.abs(3*f[0]-2*f[2]), tf:Math.abs(6*f[1]-5*f[2]) };
+}
+function pairRate(i,pi){ var f=freqs2(i), P=PAIRS[pi];
+  return Math.abs(P[4]*f[P[0]]-P[5]*f[P[1]]); }
+var DUR2=2.6, NE=1000, cachePk=[0,0,0], envCache={};
+function stripEnv(i,pi){
+  var key=i+'_'+pi; if(envCache[key]) return envCache[key];
+  var f=freqs2(i), P=PAIRS[pi], h1=f[P[0]]*P[4], h2=f[P[1]]*P[5];
+  var env=pureEnv(h1,h2,DUR2,NE);
+  var r=envCache[key]={env:env, info:peakInfo(env,DUR2), h1:h1, h2:h2};
+  return r;
+}
+function drawWv(){
+  var g=wx; g.fillStyle='#07080c'; g.fillRect(0,0,WW,WH);
+  var f=freqs2(cur2), L=132, R=WW-26, i;
+  /* 위: 파형 8ms */
+  g.save();
+  g.fillStyle='rgba(132,139,153,.9)'; g.font='600 11.5px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('세 음을 함께 울린 파형 — 8밀리초만 확대한 것', 20, 20);
+  var y1=30, h1=88, mid=y1+h1/2;
+  g.strokeStyle='rgba(255,255,255,.07)'; g.beginPath(); g.moveTo(L,mid); g.lineTo(R,mid); g.stroke();
+  g.strokeStyle='#6fb2f0'; g.lineWidth=1.6; g.beginPath();
+  for(i=0;i<=700;i++){ var t=i/700*0.008, v=signal(f,t);
+    var x=L+(R-L)*i/700, y=mid-v*h1*0.44;
+    if(i===0)g.moveTo(x,y); else g.lineTo(x,y); }
+  g.stroke();
+  g.textAlign='right'; g.font='700 11px system-ui,sans-serif'; g.fillStyle='rgba(200,208,222,.8)';
+  g.fillText('세 음 합', L-12, mid+4);
+  g.restore();
+  /* 아래: 두 음씩 짝지어 크기의 출렁임 */
+  g.save();
+  g.fillStyle='rgba(132,139,153,.9)'; g.font='600 11.5px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('두 음에서 서로 부딪히는 배음 한 쌍만 꺼내, 그 소리 크기가 2.6초 동안 어떻게 출렁이는가', 20, 138);
+  g.restore();
+  PAIRS.forEach(function(P,pi){
+    var S=stripEnv(cur2,pi), h1=S.h1, h2=S.h2, env=S.env, pi2=S.info, pk=pi2.n;
+    cachePk[pi]={n:pk, rate:pi2.rate};
+    var rate=pairRate(cur2,pi);
+    var y0=156+pi*80, h=52, base=y0+h;
+    var lo=0, sp=2.05;                 /* 두 사인의 합이므로 포락선은 0~2 — 눈금을 고정한다 */
+    g.save();
+    g.fillStyle='rgba(255,255,255,.035)'; g.fillRect(L,y0,R-L,h);
+    var col= rate<0.4? '#57c98a' : (rate<12?'#e0a52a':'#e8734a');
+    g.fillStyle=col; g.globalAlpha=.22;
+    g.beginPath(); g.moveTo(L,base);
+    for(i=0;i<NE;i++) g.lineTo(L+(R-L)*i/(NE-1), base-(env[i]-lo)/sp*h*0.9);
+    g.lineTo(R,base); g.closePath(); g.fill(); g.globalAlpha=1;
+    g.strokeStyle=col; g.lineWidth=2; g.beginPath();
+    for(i=0;i<NE;i++){ var xx=L+(R-L)*i/(NE-1), yy=base-(env[i]-lo)/sp*h*0.9;
+      if(i===0)g.moveTo(xx,yy); else g.lineTo(xx,yy); }
+    g.stroke();
+    g.textAlign='right'; g.font='800 13px system-ui,sans-serif'; g.fillStyle='rgba(238,241,246,.95)';
+    g.fillText(P[2], L-12, y0+18);
+    g.font='600 10.5px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.85)';
+    g.fillText(P[3]+' · 배음 '+P[4]+':'+P[5], L-12, y0+33);
+    g.font='600 10px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.68)';
+    g.fillText(Math.round(h1)+' / '+Math.round(h2)+' Hz', L-12, y0+46);
+    var txt= rate<0.4? '출렁임 없음 — 두 배음이 정확히 같은 진동수'
+      : ('계산 '+rate.toFixed(2)+'회/초  ·  그린 곡선의 봉우리 '+pk+'개를 세어 되짚으면 '+
+         (pi2.rate>0? pi2.rate.toFixed(2)+'회/초':'너무 느려 못 셈'));
+    g.textAlign='left'; g.font='800 11.5px system-ui,sans-serif';
+    var tw=g.measureText(txt).width;
+    g.fillStyle='rgba(7,8,12,.82)'; g.fillRect(L+6,y0+3,tw+10,16);
+    g.fillStyle=col; g.fillText(txt, L+11, y0+15);
+    g.restore();
+  });
+  g.save(); g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=1;
+  g.beginPath(); g.moveTo(L,WH-24); g.lineTo(R,WH-24); g.stroke();
+  for(var s2=0;s2<=DUR2*2;s2++){ var xs=L+(R-L)*(s2*0.5)/DUR2;
+    if(s2*0.5>DUR2) break;
+    g.fillStyle='rgba(132,139,153,.75)'; g.font='600 10.5px system-ui,sans-serif'; g.textAlign='center';
+    g.fillText((s2*0.5).toFixed(1)+'초', xs, WH-10); }
+  g.restore();
+  out2();
+}
+function out2(){
+  var f=freqs2(cur2), b=beat2(cur2), tot=b.third+b.fifth+b.tf;
+  $('fr').textContent=f.map(function(x){return x.toFixed(1);}).join(' · ');
+  $('frs').textContent='Hz · 도 / 미 / 솔';
+  $('bt').textContent= b.third<0.05? '0' : b.third.toFixed(2);
+  $('bt').parentNode.className='num '+(b.third<0.6?'b':'c');
+  $('bts').textContent='도+미 기준 · 도+솔 '+b.fifth.toFixed(2)+' · 미+솔 '+b.tf.toFixed(2);
+  var e3=cents(TUN2[cur2].r[1])-J3, e5=cents(TUN2[cur2].r[2])-J5;
+  $('er').textContent=(e3>=0?'+':'')+e3.toFixed(2)+' / '+(e5>=0?'+':'')+e5.toFixed(2);
+  $('p2info').textContent=TUN2[cur2].note;
+  var f2=$('f2');
+  if(cur2===0){ f2.className='flag ok';
+    f2.innerHTML='<b>세 줄 다 평평합니다.</b> 도의 5배음과 미의 4배음이 <b>정확히 같은 진동수</b>'+
+      '(1308.13Hz)라 부딪힐 것이 없어요. 이런 화음은 소리가 <b>하나로 녹아듭니다.</b>'; }
+  else if(cur2===1){ f2.className='flag warn';
+    f2.innerHTML='평균율의 장3도는 순정보다 <b>+13.69센트</b> 높습니다. 도의 5배음(1308.1Hz)과 '+
+      '미의 4배음(1318.5Hz)이 <b>10.4Hz 어긋나</b> 1초에 <b>10.4번</b> 울렁여요. '+
+      '반면 도+솔은 <b>0.89번</b>뿐입니다 — 5도는 거의 손대지 않고 <b>3도에 오차를 몰아준</b> 셈이에요. '+
+      '오늘날 우리가 「피아노 소리」라고 믿는 질감이 <b>사실 이 울렁임</b>입니다.'; }
+  else if(cur2===2){ f2.className='flag bad';
+    f2.innerHTML='5도만 네 번 쌓아 만든 3도(81/64)는 순정보다 <b>+21.51센트</b>입니다. '+
+      '<b>1초에 16.4번</b> 울렁여요. 대신 <b>도+솔은 완전히 평평합니다</b> — 5도는 순정 그대로니까요. '+
+      '중세에 3도를 <b>불협화음</b>으로 분류했던 이유입니다. 그때 조율에서는 실제로 탁했거든요.'; }
+  else { f2.className='flag ok';
+    f2.innerHTML='장3도를 <b>완벽하게</b> 만들었습니다 — 첫 줄이 평평해졌어요. '+
+      '대가로 5도를 <b>5.38센트</b> 좁혀서 도+솔이 <b>2.45회/초</b>, 미+솔이 <b>6.11회/초</b>로 출렁여요. '+
+      '5도는 이 정도 오차에 <b>둔감</b>해서 거의 안 들려요. '+
+      '단, 이 대가는 3번 판에서 <b>한꺼번에</b> 청구됩니다.'; }
+}
+$('tpick').innerHTML='<span class="lab">조율</span>'+TUN2.map(function(t,i){
+  return '<button class="btn'+(i===cur2?' on':'')+'" data-i="'+i+'">'+t.k+'</button>'; }).join('');
+$('tpick').onclick=function(e){ var b=e.target.closest('.btn'); if(!b)return;
+  [].forEach.call(this.querySelectorAll('.btn'),function(x){x.classList.remove('on');});
+  b.classList.add('on'); cur2=+b.dataset.i; drawWv(); };
+$('play2').onclick=function(){ stopAll(); play(freqs2(cur2),2.6); };
+[0,1,2].forEach(function(pi){ $('pp'+pi).onclick=function(){ stopAll();
+  var f=freqs2(cur2); play([f[PAIRS[pi][0]],f[PAIRS[pi][1]]],2.6); }; });
+$('ab').onclick=function(){ stopAll(); play(freqs2(0),1.5,0); play(freqs2(cur2),1.5,1.75); };
+
+/* ============ 3번: 조율 × 조 ============ */
+function fromFifths(sizes, startIdx){
+  var v=0, out=new Array(12), pc=startIdx; out[pc]=0;
+  for(var i=0;i<11;i++){ v+=sizes[i]; pc=(pc+7)%12; out[pc]=((v%1200)+1200)%1200; }
+  var base=out[0];
+  return out.map(function(x){ return ((x-base)%1200+1200)%1200; });
+}
+function rep(v,n){ var a=[]; for(var i=0;i<n;i++)a.push(v); return a; }
+var MT5=cents(Math.pow(5,0.25)), V5=J5-PC/6;
+var TUN3=[
+ {k:'피타고라스',  d:'5도를 전부 순정으로. 남은 오차가 한 5도에 전부 몰림',
+    t:fromFifths(rep(J5,11),3)},
+ {k:'중간음률',    d:'1/4 콤마 중간음률 · 16~17세기',
+    t:fromFifths(rep(MT5,11),3)},
+ {k:'발로티',      d:'6개 5도만 조금씩 좁힘 · 18세기 「잘 조율된」 방식',
+    t:fromFifths([V5,V5,V5,V5,V5,V5,J5,J5,J5,J5,J5],5)},
+ {k:'평균율',      d:'오차를 열둘로 똑같이 나눔 · 오늘날',
+    t:fromFifths(rep(700,11),3)}
+];
+function triad(ti,key){
+  var t=TUN3[ti].t;
+  var e3=t[(key+4)%12]-t[key]; if(e3<0)e3+=1200;
+  var e5=t[(key+7)%12]-t[key]; if(e5<0)e5+=1200;
+  var r=F0, f3=r*Math.pow(2,e3/1200), f5=r*Math.pow(2,e5/1200);
+  return {e3:e3-J3, e5:e5-J5, f:[r,f3,f5],
+    b:Math.abs(5*r-4*f3)+Math.abs(3*r-2*f5)+Math.abs(6*f3-5*f5)};
+}
+var HW=880, HH=330, hc=$('hm'), hx=hc.getContext('2d');
+var selT=3, selK=0;
+var HL=112, HT=54, HCW=(HW-HL-22)/12, HRH=46;
+function heat(b){
+  var v=Math.pow(Math.min(1,b/90),0.72);
+  var r=Math.round(87+(232-87)*v), g2=Math.round(201-(201-115)*v), b2=Math.round(138-(138-74)*v);
+  return 'rgba('+r+','+g2+','+b2+',';
+}
+function drawHm(){
+  var g=hx; g.fillStyle='#07080c'; g.fillRect(0,0,HW,HH);
+  g.save();
+  g.fillStyle='rgba(132,139,153,.9)'; g.font='600 11.5px system-ui,sans-serif'; g.textAlign='left';
+  g.fillText('가로 = 조(으뜸음) · 세로 = 조율법 · 칸 = 그 조의 으뜸 장3화음이 얼마나 출렁이는가', 14, 20);
+  g.textAlign='center'; g.font='700 11.5px system-ui,sans-serif';
+  for(var k=0;k<12;k++){
+    g.fillStyle='rgba(200,208,222,.85)';
+    g.fillText(NM[k]+'장조', HL+HCW*(k+0.5), HT-8);
+  }
+  for(var i=0;i<4;i++){
+    g.textAlign='right'; g.font='700 12px system-ui,sans-serif'; g.fillStyle='rgba(238,241,246,.9)';
+    g.fillText(TUN3[i].k, HL-10, HT+HRH*i+22);
+    g.font='600 9.5px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.7)';
+    g.fillText(i===0?'옛날':(i===3?'지금':''), HL-10, HT+HRH*i+35);
+    for(k=0;k<12;k++){
+      var tr=triad(i,k), x=HL+HCW*k, y=HT+HRH*i;
+      g.fillStyle=heat(tr.b)+'.42)'; g.fillRect(x+1,y+1,HCW-2,HRH-2);
+      g.strokeStyle=heat(tr.b)+'.85)'; g.lineWidth=1; g.strokeRect(x+1,y+1,HCW-2,HRH-2);
+      g.textAlign='center'; g.font='800 12px system-ui,sans-serif'; g.fillStyle='#eef1f6';
+      g.fillText(tr.b<0.6? '맑음' : tr.b.toFixed(0), x+HCW/2, y+HRH/2+1);
+      g.font='600 9.5px system-ui,sans-serif'; g.fillStyle='rgba(238,241,246,.62)';
+      g.fillText((tr.e3>=0?'+':'')+tr.e3.toFixed(0), x+HCW/2, y+HRH/2+14);
+      if(Math.abs(tr.e5)>15){ g.font='800 8.5px system-ui,sans-serif'; g.fillStyle='#ffd9cc';
+        g.fillText('늑대', x+HCW/2, y+11); }
+      if(i===selT&&k===selK){ g.strokeStyle='#fff'; g.lineWidth=2.4; g.strokeRect(x+1,y+1,HCW-2,HRH-2); }
+    }
+  }
+  /* 범례 */
+  var ly=HT+HRH*4+22;
+  g.textAlign='left'; g.font='600 11px system-ui,sans-serif'; g.fillStyle='rgba(132,139,153,.9)';
+  g.fillText('맑음', HL, ly+12);
+  for(var q=0;q<60;q++){ g.fillStyle=heat(q/60*70)+'.75)'; g.fillRect(HL+34+q*2.6, ly+3, 2.8, 11); }
+  g.fillText('탁함 (출렁임 회/초)', HL+34+60*2.6+8, ly+12);
+  g.fillStyle='rgba(132,139,153,.8)'; g.font='600 10.5px system-ui,sans-serif';
+  g.fillText('칸 아래 작은 숫자 = 장3도가 순정보다 몇 센트 높은가', HL, ly+30);
+  g.fillText('모든 조를 같은 높이(가온 도)에서 울렸다고 보고 계산 — 조마다 실제 음높이가 다른 효과는 뺀 것', HL, ly+45);
+  g.restore();
+}
+hc.onclick=function(e){
+  var r=hc.getBoundingClientRect(), sx2=HW/r.width;
+  var x=(e.clientX-r.left)*sx2, y=(e.clientY-r.top)*sx2;
+  var k=Math.floor((x-HL)/HCW), i=Math.floor((y-HT)/HRH);
+  if(k<0||k>11||i<0||i>3) return;
+  selT=i; selK=k; drawHm(); out3(); stopAll(); play(triad(i,k).f,2.4);
+};
+function out3(){
+  var tr=triad(selT,selK);
+  $('hsel').textContent=TUN3[selT].k+' · '+NM[selK]+'장조';
+  $('hsels').textContent=TUN3[selT].d;
+  $('hbt').textContent= tr.b<0.6? '0' : tr.b.toFixed(1);
+  $('hbt').parentNode.className='num '+(tr.b<8?'b':(tr.b<35?'a':'c'));
+  $('hminfo').textContent='고른 칸: '+TUN3[selT].k+' · '+NM[selK]+'장조 ('+KO[selK]+') — 다시 누르면 또 들립니다';
+  var f=$('f3');
+  if(tr.b<0.6){ f.className='flag ok'; f.innerHTML='<b>완전히 맑습니다.</b> 장3도도 5도도 순정이에요.'; }
+  else if(tr.b>60){ f.className='flag bad';
+    f.innerHTML='<b>여기가 늑대입니다.</b> 장3도가 순정보다 <b>'+tr.e3.toFixed(0)+'센트</b>, '+
+      '5도가 <b>'+(tr.e5>=0?'+':'')+tr.e5.toFixed(0)+'센트</b> — 1초에 <b>'+tr.b.toFixed(0)+'번</b> 울부짖어요. '+
+      '이 조율에서는 <b>이 조를 쓸 수 없습니다.</b>'; }
+  else if(tr.b<12){ f.className='flag ok';
+    f.innerHTML='아주 맑은 편입니다 (<b>'+tr.b.toFixed(1)+'회/초</b>). 이 조율은 <b>이런 조들을 위해</b> 만들어졌어요.'; }
+  else { f.className='flag warn';
+    f.innerHTML='<b>'+tr.b.toFixed(1)+'회/초</b> 출렁입니다. 장3도가 순정보다 <b>'+
+      (tr.e3>=0?'+':'')+tr.e3.toFixed(1)+'센트</b>예요. '+
+      (selT===3? '평균율은 <b>열두 조가 전부 이 값</b>입니다 — 좋지도 나쁘지도 않게, 똑같이.' :
+                 '옆 칸들과 <b>비교</b>해 보세요 — 조마다 다릅니다.'); }
+  /* 표 */
+  var h='<thead><tr><th>조율법</th><th>완전5도</th><th>장3도</th><th>늑대</th>'+
+    '<th>가장 맑은 조</th><th>가장 탁한 조</th></tr></thead><tbody>';
+  TUN3.forEach(function(T,i){
+    var fi=[], bs=[];
+    for(var k=0;k<12;k++){ var v=T.t[(k+7)%12]-T.t[k]; if(v<0)v+=1200; fi.push(v); bs.push(triad(i,k).b); }
+    var mn=Math.min.apply(null,fi), mx=Math.max.apply(null,fi);
+    var wolf=(mx-J5>15)? NM[fi.indexOf(mx)]+' (+'+(mx-J5).toFixed(0)+')' :
+             ((J5-mn>15)? NM[fi.indexOf(mn)]+' ('+(mn-J5).toFixed(0)+')' : '<span class="g">없음</span>');
+    var e3s=[]; for(k=0;k<12;k++) e3s.push(triad(i,k).e3);
+    var bi=bs.indexOf(Math.min.apply(null,bs)), wi=bs.indexOf(Math.max.apply(null,bs));
+    h+='<tr><td>'+T.k+'</td>'+
+      '<td>'+mn.toFixed(1)+'~'+mx.toFixed(1)+'</td>'+
+      '<td>'+Math.min.apply(null,e3s).toFixed(1)+'~+'+Math.max.apply(null,e3s).toFixed(1)+'</td>'+
+      '<td>'+wolf+'</td>'+
+      '<td class="g">'+NM[bi]+' ('+bs[bi].toFixed(1)+')</td>'+
+      '<td class="r">'+NM[wi]+' ('+bs[wi].toFixed(1)+')</td></tr>';
+  });
+  $('t3').innerHTML=h+'</tbody>';
+}
+
+/* ============ 4번: 연분수 ============ */
+(function(){
+  var L=Math.log2(1.5), a=[], y=L;
+  for(var i=0;i<10;i++){ var k=Math.floor(y); a.push(k); y=1/(y-k); }
+  var p=[1,a[0]], q=[0,1];
+  for(i=1;i<a.length;i++){ p.push(a[i]*p[i]+p[i-1]); q.push(a[i]*q[i]+q[i-1]); }
+  var h='<thead><tr><th>한 옥타브를 몇 등분</th><th>5도 = 몇 칸</th><th>5도 크기(센트)</th>'+
+    '<th>순정 701.955와의 차이</th><th></th></tr></thead><tbody>';
+  var rows=0;
+  for(i=1;i<a.length&&rows<6;i++){
+    var N=q[i+1]; if(N<3) continue;
+    var step=1200/N, best=Math.round(J5/step), err=best*step-J5;
+    h+='<tr><td>'+N+'등분</td><td>'+best+'칸</td><td>'+(best*step).toFixed(3)+'</td>'+
+      '<td class="'+(Math.abs(err)<2?'g':'r')+'">'+(err>=0?'+':'')+err.toFixed(3)+' 센트</td>'+
+      '<td style="text-align:left;color:var(--dim)">'+
+      (N===12?'← 우리가 쓰는 것':(N===53?'← 거의 완벽 · 건반 53개':(N===5?'너무 거칢':'')))+'</td></tr>';
+    rows++;
+  }
+  $('t4').innerHTML=h+'</tbody>';
+})();
+
+$('method').innerHTML='<b>검산.</b> 첫째, 콤마를 두 갈래로 계산해 맞춰 봤습니다 — '+
+ '(3/2)¹²÷2⁷ 를 실수로 계산하면 <b>1.013643265</b>, 분수로 하면 <b>531441/524288</b>이고 '+
+ '둘의 차이가 <b>10⁻¹²</b> 아래였습니다. 센트로는 <b>23.4600</b>이에요. '+
+ '둘째, 각 조율의 <b>열두 5도 크기를 전부 더하면 정확히 8400센트</b>(=7옥타브)가 나와야 합니다 — '+
+ '네 조율 모두 <b>8400.000</b>이 나왔습니다. 오차를 어디에 두든 <b>총합은 변하지 않는다</b>는 '+
+ '이 판의 주장을 계산이 그대로 확인해 준 셈이에요.<br><br>'+
+ '셋째, 1/4 콤마 중간음률의 5도를 <b>5^(1/4)</b>로 정의하고 네 번 쌓아 2옥타브를 뺐더니 '+
+ '<b>정확히 1.25</b>(순정 장3도)가 나왔고, 순정 5도보다 좁혀진 양이 <b>5.3766센트</b>로 '+
+ '신토닉 콤마(21.5063)의 <b>정확히 1/4</b>이었습니다 — 이름과 정의가 맞아떨어집니다. '+
+ '이 조율의 늑대 5도는 <b>737.64센트</b>(순정보다 +35.68)로 계산됐어요.<br><br>'+
+ '넷째, <b>화면의 그림과 식이 같은지</b>를 열두 경우 전부 맞춰 봤습니다. '+
+ '2번 판의 곡선은 <b>실제로 만들어 낸 소리 표본</b>에서 뽑은 것이고, '+
+ '거기서 봉우리를 세어 되짚은 출렁임 속도가 배음 진동수 차이로 계산한 값과 '+
+ '네 조율 × 세 음정 <b>전부 0.001% 안에서</b> 같았습니다 — 예를 들어 평균율 장3도는 '+
+ '식으로 <b>10.3824회/초</b>, 곡선에서 되짚으면 <b>10.3823회/초</b>였어요. '+
+ '순정률과 중간음률의 장3도는 두 배음이 <b>같은 값</b>이라 봉우리가 <b>0개</b>로 떨어졌고요.<br>'+
+ '이 대목에서 <b>한 번 크게 틀렸습니다.</b> 처음에는 소리 크기를 <b>짧은 구간 실효값(RMS)</b>으로 '+
+ '구했는데, 창 길이가 음 자체의 진동 주기와 안 맞아떨어져 <b>반송파 찌꺼기</b>가 남았습니다. '+
+ '그래서 출렁임이 <b>정확히 0이어야 할 순정률 장3도에서 봉우리가 79개</b>나 잡혔어요. '+
+ '숫자만 봤다면 「1.2초에 79번 출렁임」이라고 <b>그럴듯하게 써 버렸을</b> 겁니다. '+
+ '반송파 진동수로 <b>직교 복조</b>한 뒤 한 창(Hann)으로 거르는 방식으로 바꾸고 나서야 '+
+ '0이 0으로 나왔습니다. <b>0이 나와야 할 곳을 확인한 것</b>이 이 판에서 제일 중요한 검산이었어요.<br>'+
+ '다섯째, log₂(3/2)의 연분수 근사분수가 <b>1/2, 3/5, 7/12, 24/41, 31/53</b> 순으로 나왔고 '+
+ '53등분에서 5도 오차가 <b>0.068센트</b>였습니다.<br><br>'+
+ '<b>정직하게 밝힐 것.</b> 「탁함」을 <b>맥놀이 횟수의 합</b>이라는 하나의 숫자로 줄였습니다. '+
+ '실제로 사람이 느끼는 거칠기는 <b>어느 배음이 부딪히는지, 음역이 어디인지, 악기 음색이 무엇인지</b>에 '+
+ '따라 달라지고, 이걸 제대로 다루는 심리음향 모형은 훨씬 복잡합니다. '+
+ '여기 쓴 소리도 <b>배음 8개를 1/h^1.15 로 더한 인공음</b>이에요 — 진짜 피아노는 배음 구조가 다르고 '+
+ '<b>고음으로 갈수록 배음이 조금씩 높아지는(인하모니시티)</b> 성질이 있어서, 실제 피아노 조율사는 '+
+ '고음을 <b>일부러 더 높게</b> 맞춥니다. 여기 계산에는 그게 없습니다. '+
+ '3번 판은 <b>모든 조를 같은 높이에서</b> 비교했는데, 실제로는 조마다 음높이가 달라 '+
+ '맥놀이 속도가 그만큼 달라집니다. 또 조율법은 여기 넣은 넷 말고도 <b>수십 가지</b>가 있고, '+
+ '피타고라스·중간음률의 <b>늑대 위치</b>는 사슬을 어디서 끊느냐에 따라 달라져서 '+
+ '여기서는 가장 흔한 <b>미♭~솔#</b> 배치를 썼습니다.<br><br>'+
+ '<b>역사 부분은 특히 조심했습니다.</b> 12평균율의 값은 1580년대에 중국(주재육)과 '+
+ '유럽(시몬 스테빈)에서 <b>비슷한 시기에 각각</b> 계산됐다고 알려져 있는데, '+
+ '누가 먼저인지는 <b>자료마다 다르게</b> 적혀 있어 여기서는 순서를 따지지 않았습니다. '+
+ '널리 쓰이게 된 건 <b>19세기</b>입니다. 바흐의 곡집 제목이 「평균율」이 아니라 '+
+ '「잘 조율된」이라는 점은 원제(Das Wohltemperirte Clavier)로 확인되지만, '+
+ '<b>바흐가 정확히 어떤 조율을 썼는지는 밝혀지지 않았습니다</b> — 발로티를 넣은 건 '+
+ '「늑대 없이 조마다 색이 다른 방식」의 <b>한 예</b>일 뿐 바흐의 조율이라는 뜻이 아닙니다.';
+
+$('sources').innerHTML='진동수 기준: 가온 도 261.6256 Hz (A4=440) · 1센트 = 1200·log₂(비율) · '+
+ '순정 장3도 5:4 = 386.314센트, 완전5도 3:2 = 701.955센트 · '+
+ '피타고라스 콤마 531441/524288 = 23.460센트 · 신토닉 콤마 81/80 = 21.506센트 · '+
+ '소리는 Web Audio 배음 합성(1~8배음, 진폭 1/h^1.15) · 출렁임 그래프는 표본율 11,025Hz 신호를 직교 복조 후 28ms 한 창으로 거른 것';
+
+drawSp(); drawWv(); drawHm(); out3();
+
+window.__tu={
+  cents:cents, J3:J3, J5:J5, PC:PC, SC:SC,
+  TUN2:TUN2, TUN3:TUN3, triad:triad, beat2:beat2, freqs2:freqs2,
+  fifths:function(i){ var t=TUN3[i].t, f=[];
+    for(var k=0;k<12;k++){ var v=t[(k+7)%12]-t[k]; if(v<0)v+=1200; f.push(v); } return f; },
+  step:function(n){ STEP=n; drawSp(); return {tot:totCents(n), gap:totCents(n)-Math.round(totCents(n)/1200)*1200,
+    folded:foldedF(n), beat:beatOf(n)}; },
+  setT2:function(i){ cur2=i; drawWv(); return {f:freqs2(i), b:beat2(i)}; },
+  peaks:function(i){ cur2=i; drawWv(); return cachePk.slice(); },
+  strip:function(i,p){ var S=stripEnv(i,p); return {h1:S.h1,h2:S.h2,n:S.info.n,rate:S.info.rate}; },
+  rates:function(i){ cur2=i; return [0,1,2].map(function(p){return pairRate(i,p);}); },
+  pick:function(t,k){ selT=t; selK=k; drawHm(); out3(); return triad(t,k); },
+  audio:function(){ return {ok:audioOK, ctx:!!AC}; }
+};
+</script>
+</body>
+</html>
